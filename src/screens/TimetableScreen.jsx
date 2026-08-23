@@ -163,14 +163,11 @@ export default function TimetableScreen() {
                             onClick={() => push('courseDetail', { courseId: course.id })}
                             // 見た目はテーマごとに index.css の .tt-cell が決める
                             // (ダーク: 枠線を発光 / ライト: 講義カラーを淡く敷く)
-                            // 警告(赤)は現在時限の強調(シアン)より優先する
+                            // 警告は枠を赤に置き換える(.tt-cell-alert)。
+                            // 現在時限のシアンは外側のリングなので両立できる。
                             className={`tt-cell relative flex h-full w-full flex-col items-center justify-between rounded-sharp p-1 text-center active:opacity-70 md:p-2 ${
-                              isOverLimit
-                                ? 'ring-2 ring-alert'
-                                : isNowCell
-                                  ? 'ring-2 ring-cyan'
-                                  : ''
-                            }`}
+                              isOverLimit ? 'tt-cell-alert' : ''
+                            } ${isNowCell ? 'ring-2 ring-cyan' : ''}`}
                             style={{ '--course-color': course.color }}
                           >
                             {/* 欠席が上限に達した講義は赤で警告する(spec 4.5) */}
