@@ -87,16 +87,6 @@
 }
 
 :root {
-  /* --- 装飾効果。ライトモードでは影に置き換わる --- */
-  --fx-glow-sm: 0 0 6px -1px var(--glow-color, var(--color-cyan));
-  --fx-glow:
-    0 0 10px -2px var(--glow-color, var(--color-cyan)),
-    inset 0 0 12px -8px var(--glow-color, var(--color-cyan));
-  --fx-glow-lg:
-    0 0 18px -3px var(--glow-color, var(--color-cyan)),
-    inset 0 0 16px -8px var(--glow-color, var(--color-cyan));
-  --fx-text-glow: 0 0 12px var(--glow-color, var(--color-cyan));
-
   /* ヘッダー下端・タブバー上端の、両端が消える発光ライン */
   --fx-edge-line: linear-gradient(
     90deg,
@@ -119,15 +109,6 @@
 
   /* 追加ボタン(FAB)の丸み。ライトは真円にする */
   --radius-fab: 4px;
-
-  /* 時間割のコマ。テーマごとに見せ方が根本的に違うのでここで切り替える */
-  --tt-cell-bg: var(--color-panel);
-  --tt-cell-border: var(--course-color, var(--color-line));
-  --tt-cell-shadow:
-    0 0 8px -2px var(--course-color, transparent),
-    inset 0 0 12px -8px var(--course-color, transparent);
-  --tt-cell-text: var(--color-hud);
-  --tt-empty-bg: color-mix(in srgb, var(--color-panel) 40%, transparent);
 }
 
 /* ============================================================
@@ -163,22 +144,11 @@
   --radius-panel: 14px;
   --radius-fab: 9999px;
 
-  /* 発光をやめ、薄い影に置き換える */
-  --fx-glow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --fx-glow: 0 1px 3px rgba(15, 23, 42, 0.08);
-  --fx-glow-lg: 0 6px 16px -4px rgba(15, 23, 42, 0.14);
-  --fx-text-glow: none;
+  /* 発光をやめる(実際の影は下の .glow-* / .tt-cell 側で切り替える) */
   --fx-edge-line: none;
   --fx-bg-grid: none;
   --fx-scrim: rgba(15, 23, 42, 0.4);
   --fx-frame: 0 0 40px -18px rgba(15, 23, 42, 0.35);
-
-  /* コマは講義カラーを淡く敷く(デザイン仕様6.2 / 参照スクリーンショット) */
-  --tt-cell-bg: color-mix(in srgb, var(--course-color, #fff) 40%, #ffffff);
-  --tt-cell-border: transparent;
-  --tt-cell-shadow: none;
-  --tt-cell-text: #1e293b;
-  --tt-empty-bg: #ffffff;
 }
 
 @layer base {
@@ -253,16 +223,34 @@
      ダーク: 枠線を講義カラーで発光させ、文字は白
      ライト: 講義カラーを淡く敷き、文字は濃色
      -------------------------------------------------------- */
+  /* 【重要】--course-color は各コマに直接指定される。
+     CSS変数は「定義された場所」で中身が確定するため、:root 側でまとめて
+     組み立てると講義カラーが届かない。必ずこのルールの中で var() を使うこと。 */
   .tt-cell {
-    background-color: var(--tt-cell-bg);
-    border: 1px solid var(--tt-cell-border);
-    box-shadow: var(--tt-cell-shadow);
-    color: var(--tt-cell-text);
+    background-color: var(--color-panel);
+    border: 1px solid var(--course-color, var(--color-line));
+    box-shadow:
+      0 0 8px -2px var(--course-color, transparent),
+      inset 0 0 14px -6px var(--course-color, transparent);
+    color: var(--color-hud);
+  }
+
+  :root[data-theme='light'] .tt-cell {
+    /* 講義カラーを白と混ぜて淡く敷く。どんな色を選んでも必ず明るくなるので
+       文字色は濃色で固定してよい(デザイン仕様6.6の懸念が起きない) */
+    background-color: color-mix(in srgb, var(--course-color, #fff) 45%, #ffffff);
+    border-color: color-mix(in srgb, var(--course-color, #fff) 55%, #ffffff);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    color: #1e293b;
   }
 
   .tt-empty {
-    background-color: var(--tt-empty-bg);
+    background-color: color-mix(in srgb, var(--color-panel) 40%, transparent);
     border: 1px solid var(--color-line);
+  }
+
+  :root[data-theme='light'] .tt-empty {
+    background-color: #ffffff;
   }
 
   /* --------------------------------------------------------
@@ -274,9 +262,10 @@
     font-weight: 600;
     border-radius: var(--radius-sharp);
     border: 1px solid transparent;
-    padding: 0.375rem 0.75rem;
+    padding: 0.375rem 0.625rem;
     font-size: 0.75rem;
     line-height: 1.25rem;
+    white-space: nowrap;
   }
   .btn:active {
     opacity: 0.7;
@@ -289,14 +278,14 @@
     border-color: color-mix(in srgb, var(--color-electric) 80%, transparent);
     background-color: color-mix(in srgb, var(--color-electric) 15%, transparent);
     color: var(--color-hud);
-    box-shadow: var(--fx-glow-sm);
-    --glow-color: var(--color-electric);
+    box-shadow: 0 0 6px -1px var(--color-electric);
   }
   :root[data-theme='light'] .btn-primary {
     /* ライトでは塗りつぶしの青ボタンにする */
     border-color: var(--color-electric);
     background-color: var(--color-electric);
     color: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
   }
 
   .btn-ghost {
@@ -319,7 +308,9 @@
     border: 1px solid color-mix(in srgb, var(--color-cyan) 70%, transparent);
     background-color: var(--color-panel);
     color: var(--color-cyan);
-    box-shadow: var(--fx-glow);
+    box-shadow:
+      0 0 12px -2px var(--color-cyan),
+      inset 0 0 14px -8px var(--color-cyan);
   }
   :root[data-theme='light'] .fab {
     border-color: transparent;
@@ -342,20 +333,39 @@
     letter-spacing: 0.04em;
   }
 
-  /* 発光(ライトモードでは薄い影に置き換わる) */
+  /* 発光。--glow-color を指定した要素はその色で光る(既定はシアン)。
+     .tt-cell と同じ理由で、var() はこのルールの中で使う必要がある。 */
   .glow-sm {
-    box-shadow: var(--fx-glow-sm);
+    box-shadow: 0 0 6px -1px var(--glow-color, var(--color-cyan));
   }
   .glow {
-    box-shadow: var(--fx-glow);
+    box-shadow:
+      0 0 10px -2px var(--glow-color, var(--color-cyan)),
+      inset 0 0 12px -8px var(--glow-color, var(--color-cyan));
   }
   .glow-lg {
-    box-shadow: var(--fx-glow-lg);
+    box-shadow:
+      0 0 18px -3px var(--glow-color, var(--color-cyan)),
+      inset 0 0 16px -8px var(--glow-color, var(--color-cyan));
   }
 
   /* 文字自体をほのかに光らせる。大きい文字にだけ使う */
   .text-glow {
-    text-shadow: var(--fx-text-glow);
+    text-shadow: 0 0 12px var(--glow-color, var(--color-cyan));
+  }
+
+  /* ライトモードでは発光をやめ、薄い影に置き換える */
+  :root[data-theme='light'] .glow-sm {
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  }
+  :root[data-theme='light'] .glow {
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  }
+  :root[data-theme='light'] .glow-lg {
+    box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.14);
+  }
+  :root[data-theme='light'] .text-glow {
+    text-shadow: none;
   }
 
   /* ヘッダー下端・タブバー上端の発光ライン */

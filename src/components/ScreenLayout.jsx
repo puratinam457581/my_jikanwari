@@ -28,7 +28,7 @@ export default function ScreenLayout({
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="flex h-12 items-center px-2">
-          <div className="flex w-16 justify-start">
+          <div className="flex w-20 shrink-0 justify-start">
             {showBack && (
               <button
                 type="button"
@@ -45,7 +45,7 @@ export default function ScreenLayout({
             {title}
           </h1>
 
-          <div className="flex w-16 justify-end">{rightAction}</div>
+          <div className="flex w-20 shrink-0 justify-end">{rightAction}</div>
         </div>
         {headerExtra}
 
