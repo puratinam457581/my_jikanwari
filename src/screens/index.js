@@ -3,9 +3,9 @@ import ScheduleScreen from './ScheduleScreen.jsx'
 import CourseListScreen from './CourseListScreen.jsx'
 import MyPageScreen from './MyPageScreen.jsx'
 import CourseDetailScreen from './CourseDetailScreen.jsx'
+import CourseEditScreen from './CourseEditScreen.jsx'
 import DevDataPanel from '../DevDataPanel.jsx'
 import {
-  CourseEditScreen,
   CreditSettingsScreen,
   PeriodSettingsScreen,
   ScheduleEditScreen,

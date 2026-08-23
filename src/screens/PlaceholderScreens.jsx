@@ -1,5 +1,4 @@
 import ScreenLayout, { Card } from '../components/ScreenLayout.jsx'
-import { findDummyCourse } from '../data/dummy.js'
 
 /**
  * 【フェーズ2限定】中身を作るのが後のフェーズになる画面の仮実装。
@@ -15,31 +14,6 @@ function Placeholder({ phase, description }) {
         {phase} で実装
       </p>
     </Card>
-  )
-}
-
-/** 講義編集フォーム(spec 4.2 / 4.5 / 4.6) */
-export function CourseEditScreen({ courseId }) {
-  const course = courseId ? findDummyCourse(courseId) : null
-  return (
-    <ScreenLayout
-      title={course ? '講義を編集' : '講義を追加'}
-      showBack
-      rightAction={
-        <span className="font-hud text-[11px] font-semibold text-hud-faint">保存</span>
-      }
-    >
-      <div className="p-3">
-        <Placeholder
-          phase="フェーズ3"
-          description={
-            course
-              ? `「${course.name}」の編集フォーム。講義名・教員・教室・単位数・科目区分・シラバスURL・カラー・出席管理の設定を入力します。`
-              : '新規講義の入力フォーム。講義名・教員・教室・単位数・科目区分・シラバスURL・カラー・出席管理の設定を入力します。'
-          }
-        />
-      </div>
-    </ScreenLayout>
   )
 }
 

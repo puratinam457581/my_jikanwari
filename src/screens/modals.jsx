@@ -1,6 +1,7 @@
+import { useEffect, useState } from 'react'
 import Modal from '../components/Modal.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
-import { DUMMY_COURSES } from '../data/dummy.js'
+import { courseApi, semesterApi } from '../db/index.js'
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -30,6 +31,21 @@ export function AttendanceEntryModal() {
  */
 export function CoursePickerModal({ day, period }) {
   const { closeModal, push } = useNavigation()
+  const [courses, setCourses] = useState([])
+
+  useEffect(() => {
+    let cancelled = false
+    semesterApi
+      .getActiveSemester()
+      .then((semester) => (semester ? courseApi.listCourses(semester.id) : []))
+      .then((list) => {
+        if (!cancelled) setCourses(list)
+      })
+      .catch((e) => console.error(e))
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <Modal title={`${DAY_LABELS[day]}曜 ${period}限 に配置`}>
@@ -44,9 +60,16 @@ export function CoursePickerModal({ day, period }) {
         新しい講義を作成して配置
       </button>
 
-      <p className="font-hud mb-2 text-xs font-semibold tracking-widest text-cyan">登録済みの講義から選ぶ</p>
+      <p className="font-hud mb-2 text-xs font-semibold tracking-widest text-cyan">
+        登録済みの講義から選ぶ
+      </p>
+      {courses.length === 0 && (
+        <p className="py-3 text-center text-[11px] text-hud-faint">
+          この学期にはまだ講義が登録されていません
+        </p>
+      )}
       <ul className="space-y-1.5">
-        {DUMMY_COURSES.map((course) => (
+        {courses.map((course) => (
           <li key={course.id}>
             <button
               type="button"
@@ -72,7 +95,7 @@ export function CoursePickerModal({ day, period }) {
       </ul>
 
       <p className="mt-3 text-center text-[11px] text-hud-faint">
-        フェーズ2: 選択しても配置はされません(フェーズ4で実装)
+        選択してもまだ配置はされません(フェーズ4で実装)
       </p>
     </Modal>
   )

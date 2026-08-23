@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react'
 import ScreenLayout, { Button } from '../components/ScreenLayout.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
-import { DAYS, semesterApi, settingsApi } from '../db/index.js'
-import { DUMMY_COURSES } from '../data/dummy.js'
+import { DAYS, courseApi, semesterApi, settingsApi, timetableApi } from '../db/index.js'
 
 /**
  * 時間割画面(spec 4.1)。
- * フェーズ2では「グリッドの骨組みと遷移」までを作る。
- * 実データとの接続・現在時限のハイライトはフェーズ4で仕上げる。
+ *
+ * フェーズ3時点では「登録済みの配置を実データで表示する」ところまで。
+ * 空きコマからの配置、今日・現在時限のハイライトはフェーズ4で実装する。
  */
 export default function TimetableScreen() {
   const { push, openModal } = useNavigation()
   const [semester, setSemester] = useState(null)
   const [periods, setPeriods] = useState([])
   const [visibleDays, setVisibleDays] = useState([])
+  const [slotMap, setSlotMap] = useState(new Map())
 
   useEffect(() => {
     let cancelled = false
@@ -27,8 +28,24 @@ export default function TimetableScreen() {
       setSemester(activeSemester)
       setPeriods(periodSettings)
       setVisibleDays(DAYS.filter((d) => display.visibleDays[d.value]))
+      if (!activeSemester) return
+
+      // 配置と講義を突き合わせて、コマごとに引ける形にしておく
+      const [slots, courses] = await Promise.all([
+        timetableApi.listSlots(activeSemester.id),
+        courseApi.listCourses(activeSemester.id),
+      ])
+      if (cancelled) return
+
+      const courseById = new Map(courses.map((c) => [c.id, c]))
+      const map = new Map()
+      for (const slot of slots) {
+        const course = courseById.get(slot.courseId)
+        if (course) map.set(`${slot.day}-${slot.period}`, course)
+      }
+      setSlotMap(map)
     }
-    load()
+    load().catch((e) => console.error(e))
     return () => {
       cancelled = true
     }
@@ -36,9 +53,7 @@ export default function TimetableScreen() {
 
   const today = new Date().getDay()
 
-  // フェーズ2ではダミー講義を曜日・時限で引けるようにしておく
-  const courseAt = (day, period) =>
-    DUMMY_COURSES.find((c) => c.day === day && c.period === period) ?? null
+  const courseAt = (day, period) => slotMap.get(`${day}-${period}`) ?? null
 
   return (
     <ScreenLayout
@@ -129,11 +144,13 @@ export default function TimetableScreen() {
           </tbody>
         </table>
 
-        <p className="mt-4 px-2 text-center text-[11px] text-hud-faint">
-          フェーズ2: 表示中の講義はダミーです。
-          <br />
-          空きコマ・講義コマの両方をタップして遷移を確認してください。
-        </p>
+        {slotMap.size === 0 && (
+          <p className="mt-4 px-2 text-center text-[11px] text-hud-faint">
+            まだコマに講義が配置されていません。
+            <br />
+            コマへの配置はフェーズ4で実装します。
+          </p>
+        )}
       </div>
     </ScreenLayout>
   )

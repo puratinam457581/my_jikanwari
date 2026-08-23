@@ -283,6 +283,77 @@
     background-color: #ffffff;
   }
 
+
+  /* --------------------------------------------------------
+     入力欄
+     -------------------------------------------------------- */
+  .field-input {
+    width: 100%;
+    border-radius: var(--radius-sharp);
+    border: 1px solid var(--color-line);
+    background-color: var(--color-panel-2);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.9375rem;
+    color: var(--color-hud);
+  }
+  .field-input:focus {
+    outline: none;
+    border-color: var(--color-cyan);
+    box-shadow: 0 0 0 1px var(--color-cyan);
+  }
+  .field-input:disabled {
+    opacity: 0.45;
+  }
+
+  /* 入力欄の見出し */
+  .field-label {
+    font-family: var(--font-hud);
+    letter-spacing: 0.02em;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-hud-dim);
+  }
+
+  /* --------------------------------------------------------
+     ON/OFFスイッチ
+     -------------------------------------------------------- */
+  .switch {
+    position: relative;
+    width: 2.75rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-panel-2);
+    transition: background-color 0.15s;
+  }
+  .switch[data-on='true'] {
+    border-color: var(--color-cyan);
+    background-color: color-mix(in srgb, var(--color-cyan) 30%, transparent);
+    box-shadow: 0 0 8px -2px var(--color-cyan);
+  }
+  :root[data-theme='light'] .switch[data-on='true'] {
+    background-color: var(--color-electric);
+    border-color: var(--color-electric);
+    box-shadow: none;
+  }
+  .switch-knob {
+    position: absolute;
+    top: 0.1875rem;
+    left: 0.1875rem;
+    height: 1rem;
+    width: 1rem;
+    border-radius: 9999px;
+    background-color: var(--color-hud-faint);
+    transition:
+      transform 0.15s,
+      background-color 0.15s;
+  }
+  .switch[data-on='true'] .switch-knob {
+    transform: translateX(1.25rem);
+    background-color: #ffffff;
+  }
+
   /* --------------------------------------------------------
      ボタン
      -------------------------------------------------------- */
