@@ -12,6 +12,7 @@ import {
   timetableApi,
 } from './db/index.js'
 import { toDateString, toDateTimeString } from './utils/date.js'
+import ScreenLayout from './components/ScreenLayout.jsx'
 
 /**
  * 【フェーズ1限定の動作確認用画面】
@@ -152,14 +153,8 @@ export default function DevDataPanel() {
     .join(' ')
 
   return (
+    <ScreenLayout title="データ層 動作確認" showBack>
     <div className="mx-auto max-w-md p-4 pb-24 text-sm">
-      <header className="mb-4">
-        <h1 className="text-lg font-bold">データ層 動作確認</h1>
-        <p className="text-xs text-neutral-500">
-          フェーズ1の確認用。フェーズ2で本来の画面に置き換えます
-        </p>
-      </header>
-
       {error && (
         <p className="mb-3 rounded-lg bg-red-100 p-2 text-xs text-red-700">{error}</p>
       )}
@@ -316,6 +311,7 @@ export default function DevDataPanel() {
         )}
       </Card>
     </div>
+    </ScreenLayout>
   )
 }
 

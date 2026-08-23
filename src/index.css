@@ -17,6 +17,9 @@
     color: #1c1c1e;
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: none;
+    /* スクロールは画面内の本文エリアだけに任せ、ページ全体は動かさない
+       (ヘッダーとタブバーを固定するため) */
+    overflow: hidden;
   }
 
   /* iOSでのタップ時のハイライトを消す */
