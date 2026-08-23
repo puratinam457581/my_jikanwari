@@ -113,7 +113,13 @@ export default function PeriodSettingsScreen() {
                 <li key={slot.id}>
                   <button
                     type="button"
-                    onClick={() => push('courseDetail', { courseId: slot.course.id })}
+                    onClick={() =>
+                      push('courseDetail', {
+                        courseId: slot.course.id,
+                        day: slot.day,
+                        period: slot.period,
+                      })
+                    }
                     className="flex w-full items-center gap-2 rounded-sharp bg-panel-2 px-2 py-1.5 text-left active:opacity-70"
                   >
                     <span

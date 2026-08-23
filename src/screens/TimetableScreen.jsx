@@ -160,7 +160,14 @@ export default function TimetableScreen() {
                         {course ? (
                           <button
                             type="button"
-                            onClick={() => push('courseDetail', { courseId: course.id })}
+                            // どのコマから開いたかを渡し、「コマから外す」がそのコマだけに効くようにする
+                            onClick={() =>
+                              push('courseDetail', {
+                                courseId: course.id,
+                                day: day.value,
+                                period: p.period,
+                              })
+                            }
                             aria-label={`${course.name}${isOverLimit ? ' 欠席が上限に達しています' : ''}`}
                             // 見た目はテーマごとに index.css の .tt-cell が決める
                             // (ダーク: 枠線を発光 / ライト: 講義カラーを淡く敷く)

@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import ScreenLayout, { Card, EmptyState } from '../components/ScreenLayout.jsx'
-import { AlertIcon, PencilIcon, RoomIcon, TeacherIcon, TrashIcon } from '../components/icons.jsx'
+import {
+  AlertIcon,
+  CloseIcon,
+  PencilIcon,
+  RoomIcon,
+  TeacherIcon,
+  TrashIcon,
+} from '../components/icons.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
 import {
   ATTENDANCE_TYPES,
@@ -17,8 +24,8 @@ const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
  * 授業詳細画面(spec 4.3)。
  * 講義の基本情報・出欠管理・関連スケジュール・メモを扱う。
  */
-export default function CourseDetailScreen({ courseId }) {
-  const { push, openModal, popToTop } = useNavigation()
+export default function CourseDetailScreen({ courseId, day = null, period = null }) {
+  const { push, openModal } = useNavigation()
   const [loading, setLoading] = useState(true)
   const [course, setCourse] = useState(null)
   const [slots, setSlots] = useState([])
@@ -78,23 +85,29 @@ export default function CourseDetailScreen({ courseId }) {
     reload()
   }
 
-  /** 「コマから外す」。配置だけ消し、講義データ自体は残す(spec 4.3) */
-  const handleUnplace = async () => {
-    if (slots.length === 0) return
-    const target = slots
-      .map((s) => `${DAY_LABELS[s.day]}曜${s.period}限`)
-      .join('、')
+  /**
+   * 外す対象のコマを1つに絞る。
+   * 時間割のコマから来た場合はその曜日・時限、
+   * 講義リストなどから来た場合は、配置が1つだけならそれを対象にする。
+   * 複数配置があって対象を特定できない場合は null(コマごとの×で外してもらう)。
+   */
+  const targetSlot =
+    slots.find((s) => s.day === day && s.period === period) ??
+    (slots.length === 1 ? slots[0] : null)
+
+  /** 指定した1コマから外す。配置だけ消し、講義データ自体は残す(spec 4.3) */
+  const handleUnplace = async (slot) => {
+    if (!slot) return
     if (
       !window.confirm(
-        `${target} からこの講義を外します。\n講義データ自体は講義リストに残ります。\nよろしいですか?`,
+        `${DAY_LABELS[slot.day]}曜${slot.period}限 からこの講義を外します。\n` +
+          '講義データ自体は講義リストに残ります。\nよろしいですか?',
       )
     ) {
       return
     }
-    await Promise.all(
-      slots.map((s) => timetableApi.clearSlot(s.semesterId, s.day, s.period)),
-    )
-    popToTop()
+    await timetableApi.clearSlot(slot.semesterId, slot.day, slot.period)
+    reload()
   }
 
   return (
@@ -102,10 +115,10 @@ export default function CourseDetailScreen({ courseId }) {
       title={course.name}
       showBack
       rightAction={
-        slots.length > 0 && (
+        targetSlot && (
           <button
             type="button"
-            onClick={handleUnplace}
+            onClick={() => handleUnplace(targetSlot)}
             className="font-hud text-[11px] font-semibold text-alert active:opacity-60"
           >
             コマから外す
@@ -140,13 +153,21 @@ export default function CourseDetailScreen({ courseId }) {
               </p>
               <p className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-hud-dim">
                 {slots.length > 0 ? (
+                  // 配置ごとに個別に外せるようにする(複数コマある講義でも
+                  // 意図しないコマまで消えないように)
                   slots.map((s) => (
-                    <span
+                    <button
                       key={s.id}
-                      className="font-digit rounded-sharp border border-line bg-panel-2 px-1.5 py-0.5 text-cyan"
+                      type="button"
+                      onClick={() => handleUnplace(s)}
+                      aria-label={`${DAY_LABELS[s.day]}曜${s.period}限 から外す`}
+                      className={`font-digit flex items-center gap-1 rounded-sharp border bg-panel-2 px-1.5 py-0.5 text-cyan active:opacity-60 ${
+                        s.id === targetSlot?.id ? 'border-cyan/60' : 'border-line'
+                      }`}
                     >
                       {DAY_LABELS[s.day]} {s.period}限
-                    </span>
+                      <CloseIcon size={11} strokeWidth={2} className="text-hud-faint" />
+                    </button>
                   ))
                 ) : (
                   <span className="rounded-sharp border border-line bg-panel-2 px-1.5 py-0.5 text-hud-faint">
