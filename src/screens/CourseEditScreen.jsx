@@ -29,8 +29,11 @@ const toNumber = (value, fallback = 0) => {
 /**
  * 講義編集フォーム(spec 4.2 / 4.5 / 4.6)。
  * courseId があれば編集、なければ新規作成。
+ *
+ * 時間割の空きコマから開かれた場合は day / period が渡され、
+ * 新規作成した講義をそのままそのコマに配置する(spec 4.1)。
  */
-export default function CourseEditScreen({ courseId = null }) {
+export default function CourseEditScreen({ courseId = null, day = null, period = null }) {
   const { goBack, popToTop } = useNavigation()
   const isEdit = Boolean(courseId)
 
@@ -55,6 +58,12 @@ export default function CourseEditScreen({ courseId = null }) {
   })
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }))
+
+  // 新規作成かつ、配置先のコマが指定されているか
+  const placeTarget =
+    !isEdit && Number.isInteger(day) && Number.isInteger(period)
+      ? { day, period }
+      : null
 
   useEffect(() => {
     let cancelled = false
@@ -129,7 +138,11 @@ export default function CourseEditScreen({ courseId = null }) {
       if (isEdit) {
         await courseApi.updateCourse(courseId, payload)
       } else {
-        await courseApi.createCourse({ ...payload, semesterId })
+        const created = await courseApi.createCourse({ ...payload, semesterId })
+        // 空きコマから作成した場合は、そのままコマに配置する
+        if (placeTarget) {
+          await timetableApi.assignCourse(semesterId, day, period, created.id)
+        }
       }
       goBack()
     } catch (e) {
@@ -191,6 +204,13 @@ export default function CourseEditScreen({ courseId = null }) {
             {error && error !== 'name' && (
               <p className="mb-3 rounded-sharp border border-alert/60 bg-alert/10 p-2.5 text-xs text-alert">
                 {error}
+              </p>
+            )}
+
+            {placeTarget && (
+              <p className="mb-3 rounded-sharp border border-cyan/40 bg-cyan/5 p-2.5 text-xs text-cyan">
+                保存すると、この講義を {DAY_LABELS[placeTarget.day]}曜{' '}
+                {placeTarget.period}限 に配置します
               </p>
             )}
 

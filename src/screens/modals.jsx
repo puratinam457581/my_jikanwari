@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react'
 import Modal from '../components/Modal.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
-import { courseApi, semesterApi } from '../db/index.js'
+import { courseApi, semesterApi, timetableApi } from '../db/index.js'
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
-/**
- * 【フェーズ2】モーダルの枠と遷移の確認用。
- * 中身の実装はそれぞれ担当フェーズで行う。
- */
+/** モーダルとして開く画面をまとめたファイル */
 
 /** 出欠登録モーダル(spec 4.4) — 中身はフェーズ5 */
 export function AttendanceEntryModal() {
@@ -29,23 +26,41 @@ export function AttendanceEntryModal() {
  * 空きコマをタップしたときの講義選択モーダル(spec 4.1)。
  * 既存の講義から選ぶか、新規作成して配置するかを選べるようにする。
  */
-export function CoursePickerModal({ day, period }) {
+export function CoursePickerModal({ day, period, onPlaced }) {
   const { closeModal, push } = useNavigation()
   const [courses, setCourses] = useState([])
+  const [semesterId, setSemesterId] = useState(null)
+  const [placing, setPlacing] = useState(false)
 
   useEffect(() => {
     let cancelled = false
-    semesterApi
-      .getActiveSemester()
-      .then((semester) => (semester ? courseApi.listCourses(semester.id) : []))
-      .then((list) => {
-        if (!cancelled) setCourses(list)
-      })
-      .catch((e) => console.error(e))
+    async function load() {
+      const semester = await semesterApi.getActiveSemester()
+      if (cancelled || !semester) return
+      setSemesterId(semester.id)
+      const list = await courseApi.listCourses(semester.id)
+      if (!cancelled) setCourses(list)
+    }
+    load().catch((e) => console.error(e))
     return () => {
       cancelled = true
     }
   }, [])
+
+  /** 選んだ講義をこのコマに配置する(spec 4.7: 1コマ1講義) */
+  const place = async (courseId) => {
+    if (!semesterId || placing) return
+    setPlacing(true)
+    try {
+      await timetableApi.assignCourse(semesterId, day, period, courseId)
+      closeModal()
+      // 時間割側に配置されたことを伝えて再読み込みしてもらう
+      onPlaced?.()
+    } catch (e) {
+      console.error(e)
+      setPlacing(false)
+    }
+  }
 
   return (
     <Modal title={`${DAY_LABELS[day]}曜 ${period}限 に配置`}>
@@ -73,8 +88,9 @@ export function CoursePickerModal({ day, period }) {
           <li key={course.id}>
             <button
               type="button"
-              onClick={closeModal}
-              className="flex w-full items-center gap-2.5 rounded-sharp border border-line bg-panel/80 p-2.5 text-left active:bg-panel-2"
+              onClick={() => place(course.id)}
+              disabled={placing}
+              className="flex w-full items-center gap-2.5 rounded-sharp border border-line bg-panel/80 p-2.5 text-left active:bg-panel-2 disabled:opacity-50"
             >
               <span
                 className="h-4 w-4 shrink-0 rounded-sharp"
@@ -95,7 +111,7 @@ export function CoursePickerModal({ day, period }) {
       </ul>
 
       <p className="mt-3 text-center text-[11px] text-hud-faint">
-        選択してもまだ配置はされません(フェーズ4で実装)
+        1つのコマに配置できる講義は1件です
       </p>
     </Modal>
   )
