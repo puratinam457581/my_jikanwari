@@ -289,12 +289,35 @@
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
   }
 
-  /* 警告時の教室名バッジ。
-     枠の色だけに頼ると「元の講義カラーが赤」の場合に変化が伝わらず、
-     色の見分けが苦手な人にも届かないため、アイコン付きのバッジを主役にする。 */
-  .tt-badge-alert {
-    background-color: var(--color-alert);
-    color: #ffffff;
+  /* 欠席上限の警告マーク。
+     コマの背景に大きく薄く敷く「透かし」として表示する。
+     - 講義名や教室名の場所を奪わない
+     - 枠の色だけに頼らないので、講義カラーが赤系でも変化が伝わる
+     - 色の見分けが苦手な人にも「形」で届く
+     文字の可読性を最優先し、不透明度は低めに抑える(デザイン仕様2.3)。 */
+  .tt-alert-mark {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    color: var(--color-alert);
+    opacity: 0.24;
+    /* 下端は教室名バッジが不透明で重なるため、その分を避けて中央に置く */
+    padding-bottom: 1rem;
+  }
+  .tt-alert-mark svg {
+    height: 72%;
+    width: auto;
+  }
+  @media (min-width: 48rem) {
+    .tt-alert-mark {
+      padding-bottom: 1.75rem;
+    }
+  }
+  :root[data-theme='light'] .tt-alert-mark {
+    opacity: 0.2;
   }
 
   .tt-empty {

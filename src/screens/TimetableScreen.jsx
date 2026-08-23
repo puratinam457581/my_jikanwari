@@ -166,30 +166,24 @@ export default function TimetableScreen() {
                             // (ダーク: 枠線を発光 / ライト: 講義カラーを淡く敷く)
                             // 警告は枠を赤に置き換える(.tt-cell-alert)。
                             // 現在時限のシアンは外側のリングなので両立できる。
-                            // 枠の色は補助で、主役は下部のバッジ(色以外の手がかりを残すため)。
+                            // 枠の色は補助で、警告の主役は背景の透かしマーク。
                             className={`tt-cell relative flex h-full w-full flex-col items-center justify-between rounded-sharp p-1 text-center active:opacity-70 md:p-2 ${
                               isOverLimit ? 'tt-cell-alert' : ''
                             } ${isNowCell ? 'ring-2 ring-cyan' : ''}`}
                             style={{ '--course-color': course.color }}
                           >
-                            <span className="line-clamp-3 break-all text-[10px] leading-tight font-semibold md:text-sm">
+                            {/* 欠席が上限に達した講義の警告(spec 4.5)。
+                                背景に透かしとして敷くので、文字の場所を奪わない */}
+                            {isOverLimit && (
+                              <span aria-hidden className="tt-alert-mark">
+                                <AlertIcon strokeWidth={1.5} />
+                              </span>
+                            )}
+                            <span className="relative line-clamp-3 break-all text-[10px] leading-tight font-semibold md:text-sm">
                               {course.name}
                             </span>
-                            {/* 欠席が上限に達した講義は、このバッジを赤+アイコンにして知らせる
-                                (spec 4.5。枠の色だけに頼らないため) */}
-                            <span
-                              className={`font-digit flex w-full items-center justify-center gap-0.5 rounded-sharp px-1 py-0.5 text-[9px] md:px-2 md:py-1 md:text-xs ${
-                                isOverLimit ? 'tt-badge-alert' : 'bg-panel-2 text-hud-dim'
-                              }`}
-                            >
-                              {isOverLimit && (
-                                <AlertIcon
-                                  size={10}
-                                  strokeWidth={2.5}
-                                  className="shrink-0 md:h-3.5 md:w-3.5"
-                                />
-                              )}
-                              <span className="truncate">{course.room || '未登録'}</span>
+                            <span className="font-digit relative w-full truncate rounded-sharp bg-panel-2 px-1 py-0.5 text-[9px] text-hud-dim md:px-2 md:py-1 md:text-xs">
+                              {course.room || '未登録'}
                             </span>
                           </button>
                         ) : (
