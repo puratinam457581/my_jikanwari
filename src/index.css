@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+
+/* ---- アプリ全体の基本スタイル(モバイルファースト) ---- */
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    /* iOSでの慣性スクロール・ゴムバンド挙動を抑えつつ、日本語フォントを優先 */
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP',
+      'Yu Gothic', sans-serif;
+    background-color: #f5f5f7;
+    color: #1c1c1e;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  /* iOSでのタップ時のハイライトを消す */
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
