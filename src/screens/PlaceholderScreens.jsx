@@ -17,28 +17,6 @@ function Placeholder({ phase, description }) {
   )
 }
 
-/** スケジュール登録フォーム(spec 4.10) */
-export function ScheduleEditScreen({ scheduleId, courseId }) {
-  return (
-    <ScreenLayout
-      title={scheduleId ? '予定を編集' : '予定を追加'}
-      showBack
-      rightAction={
-        <span className="font-hud text-[11px] font-semibold text-hud-faint">保存</span>
-      }
-    >
-      <div className="p-3">
-        <Placeholder
-          phase="フェーズ6"
-          description={`関連する講義・締切日時・カテゴリー・メモ・通知タイミングを入力するフォーム。${
-            courseId ? '(授業詳細から開いたため、講義が初期選択されます)' : ''
-          }`}
-        />
-      </div>
-    </ScreenLayout>
-  )
-}
-
 /** 学期切替画面(spec 4.9) */
 export function SemesterSwitchScreen() {
   return (

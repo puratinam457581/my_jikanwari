@@ -133,7 +133,7 @@ export default function DevDataPanel() {
         title: `レポート提出 ${schedules.length + 1}`,
         dueAt: toDateTimeString(due),
         category: '課題',
-        notifyTiming: '1日前',
+        notifyTimings: ['1日前'],
       })
     })
 

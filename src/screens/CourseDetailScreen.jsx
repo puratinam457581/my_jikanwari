@@ -2,15 +2,20 @@ import { useCallback, useEffect, useState } from 'react'
 import ScreenLayout, { Card, EmptyState } from '../components/ScreenLayout.jsx'
 import { AlertIcon, PencilIcon, RoomIcon, TeacherIcon, TrashIcon } from '../components/icons.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
-import { ATTENDANCE_TYPES, attendanceApi, courseApi, timetableApi } from '../db/index.js'
+import {
+  ATTENDANCE_TYPES,
+  attendanceApi,
+  courseApi,
+  scheduleApi,
+  timetableApi,
+} from '../db/index.js'
 import { parseDateString } from '../utils/date.js'
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
 /**
  * 授業詳細画面(spec 4.3)。
- * 講義の基本情報・出欠管理・メモを扱う。
- * 関連スケジュールはフェーズ6で実装する。
+ * 講義の基本情報・出欠管理・関連スケジュール・メモを扱う。
  */
 export default function CourseDetailScreen({ courseId }) {
   const { push, openModal, popToTop } = useNavigation()
@@ -20,18 +25,21 @@ export default function CourseDetailScreen({ courseId }) {
   const [counts, setCounts] = useState({ present: 0, absent: 0, total: 0 })
   const [records, setRecords] = useState([])
   const [showRecords, setShowRecords] = useState(false)
+  const [schedules, setSchedules] = useState([])
 
   const load = useCallback(async () => {
-    const [found, placed, count, list] = await Promise.all([
+    const [found, placed, count, list, relatedSchedules] = await Promise.all([
       courseApi.getCourse(courseId),
       timetableApi.listSlotsByCourse(courseId),
       attendanceApi.countAttendance(courseId),
       attendanceApi.listRecordsByCourse(courseId),
+      scheduleApi.listSchedulesByCourse(courseId),
     ])
     setCourse(found ?? null)
     setSlots(placed.sort((a, b) => a.day - b.day || a.period - b.period))
     setCounts(count)
     setRecords(list)
+    setSchedules(relatedSchedules)
     setLoading(false)
   }, [courseId])
 
@@ -263,9 +271,44 @@ export default function CourseDetailScreen({ courseId }) {
           )}
         </Card>
 
-        {/* --- スケジュール(フェーズ6で中身を実装) --- */}
-        <Card title="スケジュール" action={<PhaseTag phase="フェーズ6" />}>
-          <EmptyState>関連する予定はありません</EmptyState>
+        {/* --- この講義に紐づく予定(spec 4.3) --- */}
+        <Card
+          title="スケジュール"
+          action={
+            <AddButton
+              onClick={() => push('scheduleEdit', { courseId: course.id })}
+            />
+          }
+        >
+          {schedules.length === 0 ? (
+            <EmptyState>関連する予定はありません</EmptyState>
+          ) : (
+            <ul className="space-y-1.5">
+              {schedules.map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => push('scheduleEdit', { scheduleId: item.id })}
+                    className="flex w-full items-center gap-2 rounded-sharp bg-panel-2 px-2.5 py-2 text-left active:opacity-70"
+                  >
+                    <span className="font-digit shrink-0 text-xs text-cyan">
+                      {formatRecordDate(item.dueAt.slice(0, 10))}
+                    </span>
+                    <span
+                      className={`min-w-0 flex-1 truncate text-sm ${
+                        item.done ? 'text-hud-faint line-through' : 'text-hud'
+                      }`}
+                    >
+                      {item.title}
+                    </span>
+                    <span className="font-hud shrink-0 rounded-sharp border border-line px-1.5 text-[10px] text-hud-dim">
+                      {item.category}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
 
         {/* --- メモ --- */}
@@ -294,14 +337,6 @@ export default function CourseDetailScreen({ courseId }) {
         </Card>
       </div>
     </ScreenLayout>
-  )
-}
-
-function PhaseTag({ phase }) {
-  return (
-    <span className="font-hud rounded-sharp border border-line bg-panel-2 px-2 py-0.5 text-[10px] text-hud-faint">
-      {phase}
-    </span>
   )
 }
 

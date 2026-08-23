@@ -1,6 +1,16 @@
 import { getDB } from './database.js'
-import { STORES, NOTIFY_TIMINGS } from './constants.js'
+import { NOTIFY_OPTIONS, STORES } from './constants.js'
 import { newId } from '../utils/id.js'
+
+/**
+ * 通知タイミングを配列に整える。
+ * 想定外の値が入っていても落ちないように、既知の選択肢だけを残す。
+ */
+function normalizeTimings(value) {
+  if (!Array.isArray(value)) return []
+  const allowed = NOTIFY_OPTIONS.map((o) => o.value)
+  return allowed.filter((v) => value.includes(v))
+}
 
 function buildSchedule(input) {
   return {
@@ -11,7 +21,8 @@ function buildSchedule(input) {
     category: input.category ?? '課題',
     memo: input.memo ?? '',
     done: input.done ?? false,
-    notifyTiming: input.notifyTiming ?? NOTIFY_TIMINGS.NONE,
+    // 通知タイミングは複数選択可(spec 4.10)。空配列 = 通知しない
+    notifyTimings: normalizeTimings(input.notifyTimings),
     createdAt: new Date().toISOString(),
   }
 }
@@ -51,6 +62,9 @@ export async function updateSchedule(id, patch) {
   const current = await db.get(STORES.schedules, id)
   if (!current) throw new Error(`スケジュールが見つかりません: ${id}`)
   const updated = { ...current, ...patch, id: current.id }
+  if ('notifyTimings' in patch) {
+    updated.notifyTimings = normalizeTimings(patch.notifyTimings)
+  }
   await db.put(STORES.schedules, updated)
   return updated
 }

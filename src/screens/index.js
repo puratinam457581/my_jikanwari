@@ -4,11 +4,11 @@ import CourseListScreen from './CourseListScreen.jsx'
 import MyPageScreen from './MyPageScreen.jsx'
 import CourseDetailScreen from './CourseDetailScreen.jsx'
 import CourseEditScreen from './CourseEditScreen.jsx'
+import ScheduleEditScreen from './ScheduleEditScreen.jsx'
 import DevDataPanel from '../DevDataPanel.jsx'
 import {
   CreditSettingsScreen,
   PeriodSettingsScreen,
-  ScheduleEditScreen,
   SemesterSwitchScreen,
 } from './PlaceholderScreens.jsx'
 import { AttendanceEntryModal, CoursePickerModal, MemoEditModal } from './modals.jsx'

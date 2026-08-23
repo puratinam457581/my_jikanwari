@@ -246,6 +246,96 @@ export function CategoryField({ label = '科目区分', value, onChange }) {
   )
 }
 
+/** 選択肢から1つ選ぶドロップダウン。項目数が多いときに使う */
+export function SelectField({ label, value, onChange, options, placeholder = '選択なし', hint = null }) {
+  return (
+    <Field label={label} hint={hint}>
+      <select
+        value={value ?? ''}
+        onChange={(e) => onChange(e.target.value || null)}
+        className="field-input"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </Field>
+  )
+}
+
+/**
+ * 横に並べたボタンから1つ選ぶ。
+ * options: [{ value, label }]
+ */
+export function ChoiceField({ label, value, onChange, options, hint = null }) {
+  return (
+    <Field label={label} hint={hint}>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((option) => {
+          const selected = value === option.value
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              aria-pressed={selected}
+              className={`font-hud rounded-sharp border px-3 py-1.5 text-xs font-semibold ${
+                selected
+                  ? 'glow-sm border-cyan bg-cyan/10 text-cyan'
+                  : 'border-line bg-panel-2 text-hud-dim'
+              }`}
+            >
+              {option.label}
+            </button>
+          )
+        })}
+      </div>
+    </Field>
+  )
+}
+
+/**
+ * 横に並べたボタンから複数選ぶ。
+ * value は選択された値の配列。
+ */
+export function MultiChoiceField({ label, value = [], onChange, options, hint = null }) {
+  const toggle = (option) => {
+    const next = value.includes(option)
+      ? value.filter((v) => v !== option)
+      : [...value, option]
+    onChange(next)
+  }
+
+  return (
+    <Field label={label} hint={hint}>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((option) => {
+          const selected = value.includes(option.value)
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => toggle(option.value)}
+              aria-pressed={selected}
+              className={`font-hud flex items-center gap-1.5 rounded-sharp border px-3 py-1.5 text-xs font-semibold ${
+                selected
+                  ? 'glow-sm border-cyan bg-cyan/10 text-cyan'
+                  : 'border-line bg-panel-2 text-hud-dim'
+              }`}
+            >
+              {selected && <CheckIcon size={13} strokeWidth={2.5} />}
+              {option.label}
+            </button>
+          )
+        })}
+      </div>
+    </Field>
+  )
+}
+
 /** フォーム内の見出し付きのまとまり */
 export function FormSection({ title, children }) {
   return (

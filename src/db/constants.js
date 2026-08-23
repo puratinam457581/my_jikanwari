@@ -76,12 +76,16 @@ export const SCHEDULE_CATEGORIES = [
   '補講',
 ]
 
-/** スケジュールの通知タイミング(spec 4.10) */
-export const NOTIFY_TIMINGS = {
-  NONE: 'なし',
-  ONE_DAY: '1日前',
-  THREE_DAYS: '3日前',
-}
+/**
+ * スケジュールの通知タイミング(spec 4.10)。
+ * 複数選択できる仕様のため配列で保持する。
+ * 何も選ばれていない状態が「通知なし」にあたる。
+ * days は「締切の何日前に通知するか」で、通知処理(フェーズ9)で使う。
+ */
+export const NOTIFY_OPTIONS = [
+  { value: '3日前', days: 3 },
+  { value: '1日前', days: 1 },
+]
 
 /**
  * 講義カラーのプリセット(spec 4.6)。
