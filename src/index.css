@@ -289,6 +289,14 @@
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
   }
 
+  /* 警告時の教室名バッジ。
+     枠の色だけに頼ると「元の講義カラーが赤」の場合に変化が伝わらず、
+     色の見分けが苦手な人にも届かないため、アイコン付きのバッジを主役にする。 */
+  .tt-badge-alert {
+    background-color: var(--color-alert);
+    color: #ffffff;
+  }
+
   .tt-empty {
     background-color: color-mix(in srgb, var(--color-panel) 40%, transparent);
     border: 1px solid var(--color-line);

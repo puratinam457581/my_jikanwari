@@ -161,29 +161,35 @@ export default function TimetableScreen() {
                           <button
                             type="button"
                             onClick={() => push('courseDetail', { courseId: course.id })}
+                            aria-label={`${course.name}${isOverLimit ? ' 欠席が上限に達しています' : ''}`}
                             // 見た目はテーマごとに index.css の .tt-cell が決める
                             // (ダーク: 枠線を発光 / ライト: 講義カラーを淡く敷く)
                             // 警告は枠を赤に置き換える(.tt-cell-alert)。
                             // 現在時限のシアンは外側のリングなので両立できる。
+                            // 枠の色は補助で、主役は下部のバッジ(色以外の手がかりを残すため)。
                             className={`tt-cell relative flex h-full w-full flex-col items-center justify-between rounded-sharp p-1 text-center active:opacity-70 md:p-2 ${
                               isOverLimit ? 'tt-cell-alert' : ''
                             } ${isNowCell ? 'ring-2 ring-cyan' : ''}`}
                             style={{ '--course-color': course.color }}
                           >
-                            {/* 欠席が上限に達した講義は赤で警告する(spec 4.5) */}
-                            {isOverLimit && (
-                              <span
-                                className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-alert text-white"
-                                title="欠席が上限に達しています"
-                              >
-                                <AlertIcon size={11} strokeWidth={2.5} />
-                              </span>
-                            )}
                             <span className="line-clamp-3 break-all text-[10px] leading-tight font-semibold md:text-sm">
                               {course.name}
                             </span>
-                            <span className="font-digit w-full truncate rounded-sharp bg-panel-2 px-1 py-0.5 text-[9px] text-hud-dim md:px-2 md:py-1 md:text-xs">
-                              {course.room || '未登録'}
+                            {/* 欠席が上限に達した講義は、このバッジを赤+アイコンにして知らせる
+                                (spec 4.5。枠の色だけに頼らないため) */}
+                            <span
+                              className={`font-digit flex w-full items-center justify-center gap-0.5 rounded-sharp px-1 py-0.5 text-[9px] md:px-2 md:py-1 md:text-xs ${
+                                isOverLimit ? 'tt-badge-alert' : 'bg-panel-2 text-hud-dim'
+                              }`}
+                            >
+                              {isOverLimit && (
+                                <AlertIcon
+                                  size={10}
+                                  strokeWidth={2.5}
+                                  className="shrink-0 md:h-3.5 md:w-3.5"
+                                />
+                              )}
+                              <span className="truncate">{course.room || '未登録'}</span>
                             </span>
                           </button>
                         ) : (
