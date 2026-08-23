@@ -129,6 +129,11 @@ export default function CourseDetailScreen({ courseId }) {
                     未配置
                   </span>
                 )}
+                {course.category && (
+                  <span className="rounded-sharp border border-line bg-panel-2 px-1.5 py-0.5">
+                    {course.category}
+                  </span>
+                )}
                 {course.credits > 0 && (
                   <span className="font-digit">{course.credits}単位</span>
                 )}

@@ -43,6 +43,30 @@ export const ATTENDANCE_TYPES = {
   ABSENT: '欠席',
 }
 
+/**
+ * 科目区分(spec 7.2)。
+ * 科目はジャンルごとに「1〜3群」に分かれ、各群に「必修」「選択」がある。
+ * 保存するのは value の文字列。group / type は、将来「群ごとの単位数を集計する」
+ * といった処理が必要になったときのために分解して持たせてある。
+ */
+export const COURSE_CATEGORIES = [
+  { value: '1群必修', group: 1, type: '必修' },
+  { value: '1群選択', group: 1, type: '選択' },
+  { value: '2群必修', group: 2, type: '必修' },
+  { value: '2群選択', group: 2, type: '選択' },
+  { value: '3群必修', group: 3, type: '必修' },
+  { value: '3群選択', group: 3, type: '選択' },
+]
+
+/** 科目区分の「群」の一覧(1, 2, 3) */
+export const COURSE_GROUPS = [...new Set(COURSE_CATEGORIES.map((c) => c.group))]
+
+/** 科目区分の「必修/選択」の一覧 */
+export const COURSE_CATEGORY_TYPES = [...new Set(COURSE_CATEGORIES.map((c) => c.type))]
+
+/** 科目区分が未選択のときの値(空文字) */
+export const COURSE_CATEGORY_NONE = ''
+
 /** スケジュールのカテゴリー(spec 4.10。今後の追加を想定して配列で持つ) */
 export const SCHEDULE_CATEGORIES = [
   '課題',

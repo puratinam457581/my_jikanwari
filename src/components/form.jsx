@@ -1,5 +1,11 @@
 import { useId } from 'react'
-import { PRESET_COLORS } from '../db/index.js'
+import {
+  COURSE_CATEGORIES,
+  COURSE_CATEGORY_NONE,
+  COURSE_CATEGORY_TYPES,
+  COURSE_GROUPS,
+  PRESET_COLORS,
+} from '../db/index.js'
 import { normalizeHex, readableTextOn } from '../utils/color.js'
 import { CheckIcon } from './icons.jsx'
 
@@ -181,6 +187,61 @@ export function ColorField({ label = 'カラー', value, onChange }) {
       </div>
 
       <p className="font-digit mt-2 text-[11px] text-hud-faint">{current.toUpperCase()}</p>
+    </Field>
+  )
+}
+
+/**
+ * 科目区分の選択(spec 7.2)。
+ * 「1〜3群 × 必修/選択」の6種類 + 未選択。
+ * 群ごとに行を分けて並べ、シラバスの見え方に近い形にしている。
+ */
+export function CategoryField({ label = '科目区分', value, onChange }) {
+  const current = value ?? COURSE_CATEGORY_NONE
+
+  return (
+    <Field label={label}>
+      <button
+        type="button"
+        onClick={() => onChange(COURSE_CATEGORY_NONE)}
+        aria-pressed={current === COURSE_CATEGORY_NONE}
+        className={`font-hud mb-2 rounded-sharp border px-3 py-1.5 text-xs font-semibold ${
+          current === COURSE_CATEGORY_NONE
+            ? 'border-cyan bg-cyan/10 text-cyan'
+            : 'border-line bg-panel-2 text-hud-dim'
+        }`}
+      >
+        指定なし
+      </button>
+
+      <div className="space-y-1.5">
+        {COURSE_GROUPS.map((group) => (
+          <div key={group} className="flex items-center gap-2">
+            <span className="font-digit w-8 shrink-0 text-xs text-hud-dim">{group}群</span>
+            {COURSE_CATEGORY_TYPES.map((type) => {
+              const option = COURSE_CATEGORIES.find(
+                (c) => c.group === group && c.type === type,
+              )
+              const selected = current === option.value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => onChange(option.value)}
+                  aria-pressed={selected}
+                  className={`font-hud flex-1 rounded-sharp border py-1.5 text-xs font-semibold ${
+                    selected
+                      ? 'glow-sm border-cyan bg-cyan/10 text-cyan'
+                      : 'border-line bg-panel-2 text-hud-dim'
+                  }`}
+                >
+                  {type}
+                </button>
+              )
+            })}
+          </div>
+        ))}
+      </div>
     </Field>
   )
 }

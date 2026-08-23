@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ScreenLayout, { EmptyState } from '../components/ScreenLayout.jsx'
 import {
+  CategoryField,
   ColorField,
   FormSection,
   NumberField,
@@ -9,7 +10,13 @@ import {
 } from '../components/form.jsx'
 import { TrashIcon } from '../components/icons.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
-import { DEFAULT_COLOR, courseApi, semesterApi, timetableApi } from '../db/index.js'
+import {
+  COURSE_CATEGORY_NONE,
+  DEFAULT_COLOR,
+  courseApi,
+  semesterApi,
+  timetableApi,
+} from '../db/index.js'
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -22,9 +29,6 @@ const toNumber = (value, fallback = 0) => {
 /**
  * 講義編集フォーム(spec 4.2 / 4.5 / 4.6)。
  * courseId があれば編集、なければ新規作成。
- *
- * 注: 「科目区分」(spec 7.2)は選択肢の定義が未確定のため、
- *     データ項目としては保持しつつ、フォームには出していない。
  */
 export default function CourseEditScreen({ courseId = null }) {
   const { goBack, popToTop } = useNavigation()
@@ -42,6 +46,7 @@ export default function CourseEditScreen({ courseId = null }) {
     teacher: '',
     room: '',
     credits: '',
+    category: COURSE_CATEGORY_NONE,
     syllabusUrl: '',
     color: DEFAULT_COLOR,
     attendanceEnabled: true,
@@ -74,6 +79,7 @@ export default function CourseEditScreen({ courseId = null }) {
           teacher: course.teacher ?? '',
           room: course.room ?? '',
           credits: course.credits === 0 ? '' : String(course.credits ?? ''),
+          category: course.category ?? COURSE_CATEGORY_NONE,
           syllabusUrl: course.syllabusUrl ?? '',
           color: course.color ?? DEFAULT_COLOR,
           attendanceEnabled: course.attendanceEnabled ?? true,
@@ -113,6 +119,7 @@ export default function CourseEditScreen({ courseId = null }) {
         teacher: form.teacher.trim(),
         room: form.room.trim(),
         credits: toNumber(form.credits),
+        category: form.category,
         syllabusUrl: form.syllabusUrl.trim(),
         color: form.color,
         attendanceEnabled: form.attendanceEnabled,
@@ -218,7 +225,11 @@ export default function CourseEditScreen({ courseId = null }) {
               <ColorField value={form.color} onChange={(v) => update('color', v)} />
             </FormSection>
 
-            <FormSection title="単位">
+            <FormSection title="単位・科目区分">
+              <CategoryField
+                value={form.category}
+                onChange={(v) => update('category', v)}
+              />
               <NumberField
                 label="単位数"
                 value={form.credits}
