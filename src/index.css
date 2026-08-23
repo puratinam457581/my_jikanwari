@@ -193,8 +193,8 @@
 @layer components {
   /* --------------------------------------------------------
      アプリ枠。
-     スマホでは画面いっぱい、PCなど横に広い画面では中央に
-     スマホ幅で固定する(横に間延びさせない)。
+     ~767px  : スマホ幅(28rem)で中央寄せ。下部にタブバー
+     768px~  : 左にサイドバー、右のコンテンツは横幅いっぱい
      -------------------------------------------------------- */
   .app-viewport {
     display: flex;
@@ -210,11 +210,41 @@
     background-color: var(--color-deep);
   }
 
-  @media (min-width: 30rem) {
+  /* スマホ幅を超えたあたりから、中央のアプリ枠を縁取って
+     「間延びした画面」ではなく意図した表示に見せる */
+  @media (min-width: 30rem) and (max-width: 47.99rem) {
     .app-frame {
       border-left: 1px solid var(--color-line);
       border-right: 1px solid var(--color-line);
       box-shadow: var(--fx-frame);
+    }
+  }
+
+  /* PCレイアウト */
+  @media (min-width: 48rem) {
+    .app-viewport {
+      justify-content: flex-start;
+    }
+    .app-frame {
+      flex: 1;
+      min-width: 0;
+      max-width: none;
+    }
+  }
+
+  /* 画面内のコンテンツ幅。
+     リスト系は読みやすい幅で中央寄せ、時間割は横幅を活かす */
+  .content-normal,
+  .content-wide {
+    width: 100%;
+    margin-inline: auto;
+  }
+  @media (min-width: 48rem) {
+    .content-normal {
+      max-width: 44rem;
+    }
+    .content-wide {
+      max-width: 72rem;
     }
   }
 
@@ -304,6 +334,15 @@
      追加ボタン(FAB)
      -------------------------------------------------------- */
   .fab {
+    position: absolute;
+    right: 1.25rem;
+    bottom: calc(env(safe-area-inset-bottom) + 5rem);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 3.25rem;
+    width: 3.25rem;
     border-radius: var(--radius-fab);
     border: 1px solid color-mix(in srgb, var(--color-cyan) 70%, transparent);
     background-color: var(--color-panel);
@@ -312,6 +351,13 @@
       0 0 12px -2px var(--color-cyan),
       inset 0 0 14px -8px var(--color-cyan);
   }
+  @media (min-width: 48rem) {
+    .fab {
+      right: 2rem;
+      bottom: 2rem;
+    }
+  }
+
   :root[data-theme='light'] .fab {
     border-color: transparent;
     background-color: var(--color-electric);

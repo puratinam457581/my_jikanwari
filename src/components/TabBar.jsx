@@ -8,13 +8,13 @@ const ICONS = {
   myPage: PersonIcon,
 }
 
-/** 画面下部に固定されるタブバー(spec 3章) */
+/** 画面下部に固定されるタブバー(spec 3章)。PCではサイドバー(Sidebar)に置き換わる */
 export default function TabBar() {
   const { tab, setTab } = useNavigation()
 
   return (
     <nav
-      className="relative shrink-0 border-t border-line bg-void/90 backdrop-blur-sm"
+      className="relative shrink-0 border-t border-line bg-void/90 backdrop-blur-sm md:hidden"
       // iPhoneのホームバーと重ならないよう、下端に安全余白を足す
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >

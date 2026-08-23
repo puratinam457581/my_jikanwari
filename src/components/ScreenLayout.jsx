@@ -10,12 +10,14 @@ import { useNavigation } from '../navigation/NavigationContext.jsx'
  *   showBack   : 左上に戻る矢印を出すか
  *   rightAction: ヘッダー右側に置く要素(ボタンなど)
  *   headerExtra: ヘッダー下に固定表示したい要素
+ *   wide       : PCでコンテンツ幅を広く取るか(時間割のような表向きの画面はtrue)
  */
 export default function ScreenLayout({
   title,
   showBack = false,
   rightAction = null,
   headerExtra = null,
+  wide = false,
   children,
 }) {
   const { goBack } = useNavigation()
@@ -28,7 +30,8 @@ export default function ScreenLayout({
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="flex h-12 items-center px-2">
-          <div className="flex w-20 shrink-0 justify-start">
+          {/* PCではサイドバーがあるため、見出しは左寄せにして余白を詰める */}
+          <div className="flex w-20 shrink-0 justify-start md:w-auto">
             {showBack && (
               <button
                 type="button"
@@ -41,11 +44,11 @@ export default function ScreenLayout({
             )}
           </div>
 
-          <h1 className="font-hud flex-1 truncate text-center text-base font-semibold text-hud">
+          <h1 className="font-hud flex-1 truncate px-2 text-center text-base font-semibold text-hud md:text-left md:text-lg">
             {title}
           </h1>
 
-          <div className="flex w-20 shrink-0 justify-end">{rightAction}</div>
+          <div className="flex w-20 shrink-0 justify-end md:w-auto">{rightAction}</div>
         </div>
         {headerExtra}
 
@@ -56,7 +59,9 @@ export default function ScreenLayout({
         />
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
+      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className={wide ? 'content-wide' : 'content-normal'}>{children}</div>
+      </main>
     </div>
   )
 }
@@ -109,12 +114,8 @@ export function FloatingActionButton({ onClick, label = '追加' }) {
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="fab absolute right-5 z-20 flex items-center justify-center active:opacity-80"
-      style={{
-        bottom: 'calc(env(safe-area-inset-bottom) + 5rem)',
-        height: '3.25rem',
-        width: '3.25rem',
-      }}
+      // 位置・大きさは index.css の .fab が持つ(PCではタブバーが無いぶん下に寄る)
+      className="fab active:opacity-80"
     >
       <PlusIcon size={24} strokeWidth={1.5} />
     </button>

@@ -40,6 +40,7 @@
 | バックアップ | JSON エクスポート/インポートを自前実装 |
 | アイコン | lucide-react(ISC) |
 | テーマ | ダーク/ライトの2構成。CSS変数を `<html data-theme>` で切替 |
+| レイアウト | 768px未満=スマホ幅+下部タブバー / 768px以上=左サイドバー+広い時間割 |
 | フォント | Rajdhani / Share Tech Mono(SIL OFL、public/fonts に同梱) |
 | 通知 | Service Worker + Notification API(ローカル通知ベース) |
 | ホスティング | GitHub Pages または Cloudflare Pages(無料枠) |

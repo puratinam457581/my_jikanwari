@@ -1,3 +1,4 @@
+import Sidebar from './components/Sidebar.jsx'
 import TabBar from './components/TabBar.jsx'
 import { NavigationProvider, useNavigation } from './navigation/NavigationContext.jsx'
 import { ThemeProvider } from './theme/ThemeProvider.jsx'
@@ -30,9 +31,11 @@ function AppShell() {
   const hideTabBar = stackEntry?.hideTabBar === true
 
   return (
-    // app-viewport / app-frame は、PCなど横に広い画面でも
-    // スマホ幅を保って中央に表示するための枠(index.css)
+    // app-viewport / app-frame がレイアウトの切り替えを担う(index.css)
+    //   スマホ: スマホ幅で中央寄せ + 下部タブバー
+    //   PC    : 左にサイドバー + 横幅いっぱいのコンテンツ
     <div className="app-viewport">
+      <Sidebar />
       <div className="app-frame flex flex-col">
         <div className="min-h-0 flex-1">
           {StackScreen ? (
