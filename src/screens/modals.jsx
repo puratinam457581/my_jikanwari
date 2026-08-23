@@ -113,7 +113,7 @@ export function AttendanceEntryModal({ courseId, onSaved }) {
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="field-input font-digit"
+          className="field-input"
         />
       </Field>
     </Modal>

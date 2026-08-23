@@ -214,7 +214,7 @@ export default function ScheduleEditScreen({ scheduleId = null, courseId = null 
                   type="date"
                   value={form.date}
                   onChange={(e) => update('date', e.target.value)}
-                  className="field-input font-digit"
+                  className="field-input"
                 />
               </Field>
               <Field label="時刻">
@@ -222,7 +222,7 @@ export default function ScheduleEditScreen({ scheduleId = null, courseId = null 
                   type="time"
                   value={form.time}
                   onChange={(e) => update('time', e.target.value)}
-                  className="field-input font-digit"
+                  className="field-input"
                 />
               </Field>
             </FormSection>

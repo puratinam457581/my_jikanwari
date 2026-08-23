@@ -331,6 +331,10 @@
      -------------------------------------------------------- */
   .field-input {
     width: 100%;
+    /* 日付・時刻の入力欄は「中身から決まる最小幅」を持っていて、
+       枠より広いとはみ出す。縮むことを明示して枠内に収める。 */
+    max-width: 100%;
+    min-width: 0;
     border-radius: var(--radius-sharp);
     border: 1px solid var(--color-line);
     background-color: var(--color-panel-2);
@@ -345,6 +349,25 @@
   }
   .field-input:disabled {
     opacity: 0.45;
+  }
+
+  /* 日付・時刻の入力欄。
+     iOS Safari はこれらを OS 標準の見た目で描画し、指定した幅を無視して
+     枠からはみ出すことがある。下の3点がその既知の対処:
+       - appearance: none で標準描画をやめさせる
+       - ::-webkit-date-and-time-value は既定で中央寄せかつ幅が広がるので左寄せに
+       - 字間の広い等幅フォントは最小幅をさらに広げるため字間を詰める */
+  .field-input[type='date'],
+  .field-input[type='time'] {
+    font-family: var(--font-digit);
+    letter-spacing: 0;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .field-input[type='date']::-webkit-date-and-time-value,
+  .field-input[type='time']::-webkit-date-and-time-value {
+    text-align: left;
+    margin: 0;
   }
 
   /* 入力欄の見出し */
