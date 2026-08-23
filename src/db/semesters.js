@@ -23,14 +23,33 @@ export async function getActiveSemester() {
   return all.find((s) => s.isActive) ?? all[0] ?? null
 }
 
+/**
+ * 年度と学期名から、開始日・終了日を決める。
+ * 前期は4/1〜9/30、後期は10/1〜翌3/31を既定とする。
+ */
+export function defaultSemesterDates(year, name) {
+  const isFirst = name === '前期'
+  return {
+    startDate: isFirst ? `${year}-04-01` : `${year}-10-01`,
+    endDate: isFirst ? `${year}-09-30` : `${year + 1}-03-31`,
+  }
+}
+
+/** 同じ年度・同じ学期名が既に登録されているか */
+export async function semesterExists(year, name) {
+  const all = await listSemesters()
+  return all.some((s) => s.year === year && s.name === name)
+}
+
 export async function createSemester({ name, year, startDate, endDate }) {
   const db = await getDB()
   const semester = {
     id: newId(),
     name,
     year,
-    startDate,
-    endDate,
+    ...defaultSemesterDates(year, name),
+    ...(startDate ? { startDate } : {}),
+    ...(endDate ? { endDate } : {}),
     isActive: false,
     createdAt: new Date().toISOString(),
   }
@@ -45,6 +64,26 @@ export async function updateSemester(id, patch) {
   const updated = { ...current, ...patch, id: current.id }
   await db.put(STORES.semesters, updated)
   return updated
+}
+
+/**
+ * 学期を削除する。
+ * spec 4.9 で過去のデータは保持すると定めているため、
+ * 講義が1件も登録されていない学期(誤って作った場合)だけ削除を許す。
+ */
+export async function deleteEmptySemester(id) {
+  const db = await getDB()
+  const courses = await db.getAllFromIndex(STORES.courses, 'by-semester', id)
+  if (courses.length > 0) {
+    throw new Error('この学期には講義が登録されているため削除できません')
+  }
+  const slots = await db.getAllFromIndex(STORES.timetableSlots, 'by-semester', id)
+  const tx = db.transaction([STORES.semesters, STORES.timetableSlots], 'readwrite')
+  await Promise.all([
+    tx.objectStore(STORES.semesters).delete(id),
+    ...slots.map((s) => tx.objectStore(STORES.timetableSlots).delete(s.id)),
+    tx.done,
+  ])
 }
 
 /**

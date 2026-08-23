@@ -5,13 +5,16 @@ import MyPageScreen from './MyPageScreen.jsx'
 import CourseDetailScreen from './CourseDetailScreen.jsx'
 import CourseEditScreen from './CourseEditScreen.jsx'
 import ScheduleEditScreen from './ScheduleEditScreen.jsx'
+import SemesterSwitchScreen from './SemesterSwitchScreen.jsx'
+import CreditSettingsScreen from './CreditSettingsScreen.jsx'
 import DevDataPanel from '../DevDataPanel.jsx'
+import { PeriodSettingsScreen } from './PlaceholderScreens.jsx'
 import {
-  CreditSettingsScreen,
-  PeriodSettingsScreen,
-  SemesterSwitchScreen,
-} from './PlaceholderScreens.jsx'
-import { AttendanceEntryModal, CoursePickerModal, MemoEditModal } from './modals.jsx'
+  AttendanceEntryModal,
+  CoursePickerModal,
+  MemoEditModal,
+  SemesterCreateModal,
+} from './modals.jsx'
 
 /** 下部タブに対応する4画面 */
 export const TAB_SCREENS = {
@@ -40,4 +43,5 @@ export const MODAL_SCREENS = {
   attendanceEntry: AttendanceEntryModal,
   coursePicker: CoursePickerModal,
   memoEdit: MemoEditModal,
+  semesterCreate: SemesterCreateModal,
 }

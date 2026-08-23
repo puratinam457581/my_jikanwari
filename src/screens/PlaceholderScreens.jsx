@@ -17,20 +17,6 @@ function Placeholder({ phase, description }) {
   )
 }
 
-/** 学期切替画面(spec 4.9) */
-export function SemesterSwitchScreen() {
-  return (
-    <ScreenLayout title="学期の管理" showBack>
-      <div className="p-3">
-        <Placeholder
-          phase="フェーズ7"
-          description="前期/後期の切り替えと、過去の学期の閲覧。過去のデータは削除せず残します。"
-        />
-      </div>
-    </ScreenLayout>
-  )
-}
-
 /** 時限設定画面(spec 4.8) */
 export function PeriodSettingsScreen() {
   return (
@@ -39,20 +25,6 @@ export function PeriodSettingsScreen() {
         <Placeholder
           phase="フェーズ8"
           description="時限数の増減、各時限の開始/終了時刻、時間割に表示する曜日の設定。"
-        />
-      </div>
-    </ScreenLayout>
-  )
-}
-
-/** 単位設定・進捗画面(spec 4.11) */
-export function CreditSettingsScreen() {
-  return (
-    <ScreenLayout title="必要単位数・進捗" showBack>
-      <div className="p-3">
-        <Placeholder
-          phase="フェーズ7"
-          description="卒業/進級に必要な単位数の設定と、取得済み単位との比較表示。学期をまたいで累計します。"
         />
       </div>
     </ScreenLayout>

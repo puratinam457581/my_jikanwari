@@ -9,7 +9,7 @@ import {
   semesterApi,
   timetableApi,
 } from '../db/index.js'
-import { toDateString } from '../utils/date.js'
+import { getAcademicYear, toDateString } from '../utils/date.js'
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -162,6 +162,105 @@ export function MemoEditModal({ courseId, initialMemo = '', onSaved }) {
       />
       <p className="mt-2 text-[11px] text-hud-faint">
         空にして保存すると、メモを削除できます
+      </p>
+    </Modal>
+  )
+}
+
+/** 学期の新規作成(spec 4.9: 前期・後期の2学期制) */
+export function SemesterCreateModal({ onCreated }) {
+  const { closeModal } = useNavigation()
+  const [year, setYear] = useState(() => String(getAcademicYear()))
+  const [name, setName] = useState('前期')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleSubmit = async () => {
+    const yearNumber = Number(year)
+    if (!Number.isInteger(yearNumber) || yearNumber < 1900 || yearNumber > 2999) {
+      setError('年度を正しく入力してください')
+      return
+    }
+    setSaving(true)
+    try {
+      if (await semesterApi.semesterExists(yearNumber, name)) {
+        setError(`${yearNumber}年度 ${name} は既に登録されています`)
+        setSaving(false)
+        return
+      }
+      await semesterApi.createSemester({ year: yearNumber, name })
+      closeModal()
+      onCreated?.()
+    } catch (e) {
+      console.error(e)
+      setError('作成に失敗しました')
+      setSaving(false)
+    }
+  }
+
+  const dates = semesterApi.defaultSemesterDates(Number(year) || 0, name)
+
+  return (
+    <Modal
+      title="学期を追加"
+      footer={
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={saving}
+          className="font-hud text-sm font-semibold text-cyan active:opacity-60 disabled:opacity-40"
+        >
+          作成
+        </button>
+      }
+    >
+      {error && (
+        <p className="mb-3 rounded-sharp border border-alert/60 bg-alert/10 p-2.5 text-xs text-alert">
+          {error}
+        </p>
+      )}
+
+      <Field label="年度">
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            inputMode="numeric"
+            value={year}
+            onChange={(e) => {
+              setYear(e.target.value)
+              setError(null)
+            }}
+            className="field-input font-digit"
+          />
+          <span className="shrink-0 text-sm text-hud-dim">年度</span>
+        </div>
+      </Field>
+
+      <Field label="学期">
+        <div className="flex gap-2">
+          {['前期', '後期'].map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                setName(option)
+                setError(null)
+              }}
+              aria-pressed={name === option}
+              className={`font-hud flex-1 rounded-sharp border py-3 text-sm font-semibold ${
+                name === option
+                  ? 'glow-sm border-cyan bg-cyan/15 text-cyan'
+                  : 'border-line bg-panel-2 text-hud-dim'
+              }`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </Field>
+
+      <p className="font-digit text-[11px] text-hud-faint">
+        期間: {dates.startDate} 〜 {dates.endDate}
       </p>
     </Modal>
   )

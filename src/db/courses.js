@@ -29,6 +29,15 @@ export async function listCourses(semesterId) {
   return list.sort((a, b) => a.name.localeCompare(b.name, 'ja'))
 }
 
+/**
+ * 全学期の講義を返す。
+ * 単位の集計は学期をまたいだ累計で行うため(spec 4.11)、ここでは絞り込まない。
+ */
+export async function listAllCourses() {
+  const db = await getDB()
+  return db.getAll(STORES.courses)
+}
+
 export async function getCourse(id) {
   const db = await getDB()
   return db.get(STORES.courses, id)
