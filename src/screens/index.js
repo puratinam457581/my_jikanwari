@@ -7,8 +7,8 @@ import CourseEditScreen from './CourseEditScreen.jsx'
 import ScheduleEditScreen from './ScheduleEditScreen.jsx'
 import SemesterSwitchScreen from './SemesterSwitchScreen.jsx'
 import CreditSettingsScreen from './CreditSettingsScreen.jsx'
+import PeriodSettingsScreen from './PeriodSettingsScreen.jsx'
 import DevDataPanel from '../DevDataPanel.jsx'
-import { PeriodSettingsScreen } from './PlaceholderScreens.jsx'
 import {
   AttendanceEntryModal,
   CoursePickerModal,

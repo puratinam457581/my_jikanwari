@@ -21,6 +21,12 @@ export async function getSlotMap(semesterId) {
   return map
 }
 
+/** 全学期のコマ配置を返す。設定変更で隠れるデータを探すのに使う */
+export async function listAllSlots() {
+  const db = await getDB()
+  return db.getAll(STORES.timetableSlots)
+}
+
 /** 曜日・時限を指定して1コマぶんの配置を取得する */
 export async function getSlot(semesterId, day, period) {
   const db = await getDB()

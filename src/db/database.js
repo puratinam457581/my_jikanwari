@@ -114,6 +114,7 @@ async function seedDefaults(db) {
       requiredCredits: null, // 卒業に必要な単位数
       promotionCreditsByGrade: {}, // 学年ごとの進級に必要な単位数
       grade: null, // 学年
+      periodCount: DEFAULT_PERIOD_SETTINGS.length, // 表示する時限数
       theme: 'dark', // 表示テーマ(デザイン仕様6.5)
     })
   }

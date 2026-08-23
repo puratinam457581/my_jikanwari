@@ -8,14 +8,31 @@ import {
 
 // ---------------- 時限設定 (spec 7.6 / 4.8) ----------------
 
-/** 時限設定を1限から順に返す */
-export async function getPeriodSettings() {
+/** 設定できる時限数の上限 */
+export const MAX_PERIODS = 12
+
+/** 保存されている時限設定を、時限番号順にすべて返す */
+export async function getAllPeriodSettings() {
   const db = await getDB()
   const all = await db.getAll(STORES.periodSettings)
   return all.sort((a, b) => a.period - b.period)
 }
 
-/** 表示する時限数(=最大時限番号) */
+/**
+ * 時間割に表示する時限設定を返す。
+ *
+ * 時限数を減らしても、その時限の時刻設定は削除せず残しておく
+ * (減らして増やし直したときに、設定した時刻が失われないようにするため)。
+ * 表示する範囲は displaySettings.periodCount で決める。
+ */
+export async function getPeriodSettings() {
+  const [all, settings] = await Promise.all([getAllPeriodSettings(), getDisplaySettings()])
+  // periodCount が未設定の古いデータでは、保存されている行数をそのまま使う
+  const count = settings.periodCount ?? all.length
+  return all.filter((p) => p.period <= count)
+}
+
+/** 表示する時限数 */
 export async function getPeriodCount() {
   const periods = await getPeriodSettings()
   return periods.length
@@ -36,28 +53,30 @@ export async function updatePeriodTime(period, { startTime, endTime }) {
 
 /**
  * 時限数を変更する(spec 4.8)。
- * 減らした場合、その時限の「設定行」だけを消し、
- * 時間割に配置済みの講義データ(timetableSlots)は削除しない。
- * → 非表示になるだけで保持される。警告表示は画面側で行う。
+ *
+ * 減らしても何も削除しない。時刻設定も、時間割に配置済みの講義も残り、
+ * 表示範囲から外れるだけ。隠れた配置がある場合の警告は画面側で出す。
  */
 export async function setPeriodCount(count) {
+  const clamped = Math.min(MAX_PERIODS, Math.max(1, Math.floor(count) || 1))
   const db = await getDB()
-  const current = await getPeriodSettings()
-  const tx = db.transaction(STORES.periodSettings, 'readwrite')
-  const jobs = []
+  const current = await getAllPeriodSettings()
 
-  for (let period = 1; period <= count; period += 1) {
+  // 表示範囲に足りない行だけを既定値で補う
+  const missing = []
+  for (let period = 1; period <= clamped; period += 1) {
     if (!current.some((p) => p.period === period)) {
-      // 既定値が用意されていればそれを、なければ空の時刻で追加する
       const preset = DEFAULT_PERIOD_SETTINGS.find((p) => p.period === period)
-      jobs.push(tx.store.put(preset ? { ...preset } : { period, startTime: '', endTime: '' }))
+      missing.push(preset ? { ...preset } : { period, startTime: '', endTime: '' })
     }
   }
-  for (const p of current) {
-    if (p.period > count) jobs.push(tx.store.delete(p.period))
+
+  if (missing.length > 0) {
+    const tx = db.transaction(STORES.periodSettings, 'readwrite')
+    await Promise.all([...missing.map((row) => tx.store.put(row)), tx.done])
   }
 
-  await Promise.all([...jobs, tx.done])
+  await updateDisplaySettings({ periodCount: clamped })
   return getPeriodSettings()
 }
 
@@ -94,6 +113,8 @@ export async function getDisplaySettings() {
     promotionCreditsByGrade: {},
     // 学年(1〜)。どの進級要件を使うかの判断に使う
     grade: null,
+    // 時間割に表示する時限数。null は「保存されている時限設定の行数に従う」
+    periodCount: null,
     theme: 'dark', // 表示テーマ(デザイン仕様6.5)
     ...settings,
   }

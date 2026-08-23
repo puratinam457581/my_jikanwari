@@ -82,7 +82,7 @@ export default function MyPageScreen() {
 
         <Card title="設定">
           <LinkRow label="必要単位数・単位進捗" onClick={() => push('creditSettings')} />
-          <LinkRow label="時限・曜日の設定" value="フェーズ8" onClick={() => push('periodSettings')} />
+          <LinkRow label="時限・曜日の設定" onClick={() => push('periodSettings')} />
           <LinkRow
             label="学期の管理"
             value={semester ? `${semester.year}年度 ${semester.name}` : null}
