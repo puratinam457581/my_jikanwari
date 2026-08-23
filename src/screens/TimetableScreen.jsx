@@ -164,12 +164,12 @@ export default function TimetableScreen() {
                             aria-label={`${course.name}${isOverLimit ? ' 欠席が上限に達しています' : ''}`}
                             // 見た目はテーマごとに index.css の .tt-cell が決める
                             // (ダーク: 枠線を発光 / ライト: 講義カラーを淡く敷く)
-                            // 警告は枠を赤に置き換える(.tt-cell-alert)。
-                            // 現在時限のシアンは外側のリングなので両立できる。
-                            // 枠の色は補助で、警告の主役は背景の透かしマーク。
+                            // 欠席上限の警告は背景の透かしマークが担う。
+                            // 枠は講義カラーのまま残す(枠を赤にすると、その講義が
+                            // 何色なのかという情報が消えてしまうため)。
                             className={`tt-cell relative flex h-full w-full flex-col items-center justify-between rounded-sharp p-1 text-center active:opacity-70 md:p-2 ${
-                              isOverLimit ? 'tt-cell-alert' : ''
-                            } ${isNowCell ? 'ring-2 ring-cyan' : ''}`}
+                              isNowCell ? 'ring-2 ring-cyan' : ''
+                            }`}
                             style={{ '--course-color': course.color }}
                           >
                             {/* 欠席が上限に達した講義の警告(spec 4.5)。
@@ -182,7 +182,9 @@ export default function TimetableScreen() {
                             <span className="relative line-clamp-3 break-all text-[10px] leading-tight font-semibold md:text-sm">
                               {course.name}
                             </span>
-                            <span className="font-digit relative w-full truncate rounded-sharp bg-panel-2 px-1 py-0.5 text-[9px] text-hud-dim md:px-2 md:py-1 md:text-xs">
+                            {/* 全角文字(「ー」など)が混ざると幅を食うため、
+                                余白と字間を詰めて表示できる文字数を稼ぐ */}
+                            <span className="tt-room relative w-full truncate rounded-sharp bg-panel-2 px-0.5 py-0.5 text-[9px] text-hud-dim md:px-2 md:py-1 md:text-xs">
                               {course.room || '未登録'}
                             </span>
                           </button>

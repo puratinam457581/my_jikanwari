@@ -274,21 +274,6 @@
     color: #1e293b;
   }
 
-  /* 欠席が上限に達したコマ(spec 4.5)。
-     講義カラーの枠に赤を「重ねる」と二重線になるので、枠ごと赤に置き換える。 */
-  .tt-cell-alert {
-    border-width: 2px;
-    border-color: var(--color-alert);
-    box-shadow:
-      0 0 10px -2px var(--color-alert),
-      inset 0 0 16px -6px var(--color-alert);
-  }
-  :root[data-theme='light'] .tt-cell-alert {
-    border-width: 2px;
-    border-color: var(--color-alert);
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
-  }
-
   /* 欠席上限の警告マーク。
      コマの背景に大きく薄く敷く「透かし」として表示する。
      - 講義名や教室名の場所を奪わない
@@ -303,7 +288,7 @@
     justify-content: center;
     pointer-events: none;
     color: var(--color-alert);
-    opacity: 0.24;
+    opacity: 0.28;
     /* 下端は教室名バッジが不透明で重なるため、その分を避けて中央に置く */
     padding-bottom: 1rem;
   }
@@ -317,7 +302,18 @@
     }
   }
   :root[data-theme='light'] .tt-alert-mark {
-    opacity: 0.2;
+    opacity: 0.24;
+  }
+
+  /* 時間割の教室名バッジ。
+     font-digit は字間を空けるが、狭いコマでは1文字ぶんの差が効いてくる。
+     特に全角文字(「ー」など)が混ざると半角の約2倍の幅を取るため、
+     ここでは字間を詰めて表示できる文字数を稼ぐ。
+     (font-digit ユーティリティは tracking-* より後に出力されて打ち消せないので、
+      専用クラスとして分けている) */
+  .tt-room {
+    font-family: var(--font-digit);
+    letter-spacing: 0;
   }
 
   .tt-empty {
