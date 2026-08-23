@@ -1,42 +1,48 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import ScreenLayout, { Card, EmptyState } from '../components/ScreenLayout.jsx'
-import { PencilIcon, RoomIcon, TeacherIcon } from '../components/icons.jsx'
+import { AlertIcon, PencilIcon, RoomIcon, TeacherIcon, TrashIcon } from '../components/icons.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
-import { courseApi, timetableApi } from '../db/index.js'
+import { ATTENDANCE_TYPES, attendanceApi, courseApi, timetableApi } from '../db/index.js'
+import { parseDateString } from '../utils/date.js'
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
 /**
  * 授業詳細画面(spec 4.3)。
- * フェーズ3では講義の基本情報を実データで表示するところまで。
- * 出欠のカウント・警告はフェーズ5、関連スケジュールはフェーズ6で実装する。
+ * 講義の基本情報・出欠管理・メモを扱う。
+ * 関連スケジュールはフェーズ6で実装する。
  */
 export default function CourseDetailScreen({ courseId }) {
-  const { push, popToTop } = useNavigation()
+  const { push, openModal, popToTop } = useNavigation()
   const [loading, setLoading] = useState(true)
   const [course, setCourse] = useState(null)
   const [slots, setSlots] = useState([])
+  const [counts, setCounts] = useState({ present: 0, absent: 0, total: 0 })
+  const [records, setRecords] = useState([])
+  const [showRecords, setShowRecords] = useState(false)
+
+  const load = useCallback(async () => {
+    const [found, placed, count, list] = await Promise.all([
+      courseApi.getCourse(courseId),
+      timetableApi.listSlotsByCourse(courseId),
+      attendanceApi.countAttendance(courseId),
+      attendanceApi.listRecordsByCourse(courseId),
+    ])
+    setCourse(found ?? null)
+    setSlots(placed.sort((a, b) => a.day - b.day || a.period - b.period))
+    setCounts(count)
+    setRecords(list)
+    setLoading(false)
+  }, [courseId])
 
   useEffect(() => {
-    let cancelled = false
-    async function load() {
-      const [found, placed] = await Promise.all([
-        courseApi.getCourse(courseId),
-        timetableApi.listSlotsByCourse(courseId),
-      ])
-      if (cancelled) return
-      setCourse(found ?? null)
-      setSlots(placed.sort((a, b) => a.day - b.day || a.period - b.period))
-      setLoading(false)
-    }
     load().catch((e) => {
       console.error(e)
       setLoading(false)
     })
-    return () => {
-      cancelled = true
-    }
-  }, [courseId])
+  }, [load])
+
+  const reload = () => load().catch((e) => console.error(e))
 
   if (loading) {
     return (
@@ -52,6 +58,16 @@ export default function CourseDetailScreen({ courseId }) {
         <EmptyState>講義が見つかりませんでした</EmptyState>
       </ScreenLayout>
     )
+  }
+
+  // 欠席が上限に到達しているか(spec 4.5: 到達した時点でのみ警告する)
+  const limitReached = attendanceApi.isAbsenceLimitReached(course, counts.absent)
+
+  /** 誤って登録した記録を取り消せるようにする */
+  const handleDeleteRecord = async (record) => {
+    if (!window.confirm(`${record.date} の「${record.type}」を削除しますか?`)) return
+    await attendanceApi.deleteRecord(record.id)
+    reload()
   }
 
   /** 「コマから外す」。配置だけ消し、講義データ自体は残す(spec 4.3) */
@@ -162,13 +178,84 @@ export default function CourseDetailScreen({ courseId }) {
           </a>
         )}
 
-        {/* --- 出欠管理(フェーズ5で中身を実装) --- */}
-        <Card title="出欠管理" action={<PhaseTag phase="フェーズ5" />}>
+        {/* --- 出欠管理 --- */}
+        <Card
+          title="出欠管理"
+          action={
+            course.attendanceEnabled && (
+              <AddButton
+                onClick={() =>
+                  openModal('attendanceEntry', { courseId: course.id, onSaved: reload })
+                }
+              />
+            )
+          }
+        >
           {course.attendanceEnabled ? (
-            <div className="flex divide-x divide-line">
-              <CountBlock label="出席" value={0} />
-              <CountBlock label="欠席" value={0} />
-            </div>
+            <>
+              {limitReached && (
+                <p className="glow-sm mb-3 flex items-center gap-2 rounded-sharp border border-alert bg-alert/10 p-2.5 text-xs font-semibold text-alert [--glow-color:var(--color-alert)]">
+                  <AlertIcon size={16} strokeWidth={1.8} className="shrink-0" />
+                  欠席が上限({course.absenceLimit}回)に達しています
+                </p>
+              )}
+
+              <div className="flex divide-x divide-line">
+                <CountBlock label="出席" value={counts.present} />
+                <CountBlock
+                  label="欠席"
+                  value={counts.absent}
+                  limit={course.absenceLimit}
+                  alert={limitReached}
+                />
+              </div>
+
+              {records.length > 0 && (
+                <div className="mt-3 border-t border-line pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowRecords((v) => !v)}
+                    className="font-hud w-full text-center text-[11px] font-semibold text-hud-dim active:opacity-60"
+                  >
+                    {showRecords ? '記録を隠す' : `記録を表示 (${records.length}件)`}
+                  </button>
+
+                  {showRecords && (
+                    <ul className="mt-2 space-y-1">
+                      {records.map((record) => (
+                        <li
+                          key={record.id}
+                          className="flex items-center justify-between rounded-sharp bg-panel-2 px-2.5 py-1.5"
+                        >
+                          <span className="font-digit text-xs text-hud">
+                            {formatRecordDate(record.date)}
+                          </span>
+                          <span className="flex items-center gap-2">
+                            <span
+                              className={`font-hud text-xs font-semibold ${
+                                record.type === ATTENDANCE_TYPES.ABSENT
+                                  ? 'text-alert'
+                                  : 'text-cyan'
+                              }`}
+                            >
+                              {record.type}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteRecord(record)}
+                              aria-label={`${record.date} の記録を削除`}
+                              className="text-hud-faint active:opacity-60"
+                            >
+                              <TrashIcon size={14} strokeWidth={1.5} />
+                            </button>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </>
           ) : (
             <p className="py-2 text-center text-sm text-hud-faint">
               この授業は出席管理の対象外です
@@ -181,8 +268,22 @@ export default function CourseDetailScreen({ courseId }) {
           <EmptyState>関連する予定はありません</EmptyState>
         </Card>
 
-        {/* --- メモ(フェーズ5で中身を実装) --- */}
-        <Card title="メモ" action={<PhaseTag phase="フェーズ5" />}>
+        {/* --- メモ --- */}
+        <Card
+          title="メモ"
+          action={
+            <AddButton
+              label={course.memo ? '編集' : '追加'}
+              onClick={() =>
+                openModal('memoEdit', {
+                  courseId: course.id,
+                  initialMemo: course.memo ?? '',
+                  onSaved: reload,
+                })
+              }
+            />
+          }
+        >
           {course.memo ? (
             <p className="text-sm leading-relaxed whitespace-pre-wrap text-hud">
               {course.memo}
@@ -204,14 +305,40 @@ function PhaseTag({ phase }) {
   )
 }
 
+function AddButton({ onClick, label = '追加' }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="font-hud rounded-sharp border border-electric/70 bg-electric/15 px-2.5 py-1 text-xs font-semibold text-hud active:opacity-70"
+    >
+      {label}
+    </button>
+  )
+}
+
 /** 計器盤らしく、大きな数値と細いラベルで見せる(デザイン仕様3.3) */
-function CountBlock({ label, value }) {
+function CountBlock({ label, value, limit = 0, alert = false }) {
   return (
     <div className="flex-1 py-1 text-center">
-      <p className="font-digit text-4xl leading-none font-bold text-hud">
+      <p
+        className={`font-digit text-4xl leading-none font-bold ${
+          alert ? 'text-glow text-alert [--glow-color:var(--color-alert)]' : 'text-hud'
+        }`}
+      >
         {String(value).padStart(2, '0')}
+        {limit > 0 && (
+          <span className="ml-1 text-base font-normal text-hud-faint">/{limit}</span>
+        )}
       </p>
       <p className="font-hud mt-2 text-xs tracking-widest text-hud-dim">{label}</p>
     </div>
   )
+}
+
+/** 'YYYY-MM-DD' を「8/24(月)」の形にする */
+function formatRecordDate(value) {
+  const date = parseDateString(value)
+  if (!date) return value
+  return `${date.getMonth() + 1}/${date.getDate()}(${DAY_LABELS[date.getDay()]})`
 }

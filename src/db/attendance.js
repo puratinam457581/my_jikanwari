@@ -19,6 +19,31 @@ export async function countAttendance(courseId) {
   }
 }
 
+/**
+ * 複数の講義の欠席数をまとめて数える。
+ * 時間割画面で、上限に到達した講義に警告を出すために使う(spec 4.5)。
+ * 1講義ずつ問い合わせると遅くなるため、1つのトランザクションでまとめて読む。
+ */
+export async function countAbsencesByCourse(courseIds) {
+  const result = new Map()
+  if (courseIds.length === 0) return result
+
+  const db = await getDB()
+  const tx = db.transaction(STORES.attendanceRecords, 'readonly')
+  const index = tx.store.index('by-course')
+
+  const entries = await Promise.all(
+    courseIds.map(async (id) => {
+      const records = await index.getAll(id)
+      return [id, records.filter((r) => r.type === ATTENDANCE_TYPES.ABSENT).length]
+    }),
+  )
+  await tx.done
+
+  for (const [id, count] of entries) result.set(id, count)
+  return result
+}
+
 /** 同じ講義・同じ日付の記録を探す(重複登録の確認用、spec 4.4) */
 export async function findRecordByDate(courseId, date) {
   const db = await getDB()

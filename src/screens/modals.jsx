@@ -1,22 +1,167 @@
 import { useEffect, useState } from 'react'
 import Modal from '../components/Modal.jsx'
+import { Field } from '../components/form.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
-import { courseApi, semesterApi, timetableApi } from '../db/index.js'
+import {
+  ATTENDANCE_TYPES,
+  attendanceApi,
+  courseApi,
+  semesterApi,
+  timetableApi,
+} from '../db/index.js'
+import { toDateString } from '../utils/date.js'
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
 /** モーダルとして開く画面をまとめたファイル */
 
-/** 出欠登録モーダル(spec 4.4) — 中身はフェーズ5 */
-export function AttendanceEntryModal() {
+/**
+ * 出欠登録モーダル(spec 4.4)。
+ * 種別は 出席/欠席 の2択のみ(spec 4.5: 遅刻・早退はカウントしない)。
+ */
+export function AttendanceEntryModal({ courseId, onSaved }) {
+  const { closeModal } = useNavigation()
+  const [type, setType] = useState(ATTENDANCE_TYPES.PRESENT)
+  const [date, setDate] = useState(() => toDateString())
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleSubmit = async () => {
+    if (!date || saving) return
+    setSaving(true)
+    try {
+      // まずは上書きせずに試し、同じ日付の記録があれば確認を挟む(spec 4.4)
+      const first = await attendanceApi.addRecord({ courseId, date, type })
+
+      if (first.duplicated) {
+        const ok = window.confirm(
+          [
+            `${date} には既に「${first.record.type}」の記録があります。`,
+            `「${type}」で上書きしますか?`,
+          ].join('\n'),
+        )
+        if (!ok) {
+          setSaving(false)
+          return
+        }
+        await attendanceApi.addRecord({ courseId, date, type }, { overwrite: true })
+      }
+
+      closeModal()
+      onSaved?.()
+    } catch (e) {
+      console.error(e)
+      setError('登録に失敗しました')
+      setSaving(false)
+    }
+  }
+
+  const options = [
+    { value: ATTENDANCE_TYPES.PRESENT, tone: 'cyan' },
+    { value: ATTENDANCE_TYPES.ABSENT, tone: 'alert' },
+  ]
+
   return (
     <Modal
       title="出欠を登録"
-      footer={<span className="font-hud text-sm font-semibold text-hud-faint">登録</span>}
+      footer={
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={saving}
+          className="font-hud text-sm font-semibold text-cyan active:opacity-60 disabled:opacity-40"
+        >
+          登録
+        </button>
+      }
     >
-      <p className="text-sm text-hud-dim">出席/欠席の選択と、対象日付の指定を行います。</p>
-      <p className="font-hud mt-3 inline-block rounded-sharp border border-cyan/40 bg-cyan/5 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-cyan">
-        フェーズ5 で実装
+      {error && (
+        <p className="mb-3 rounded-sharp border border-alert/60 bg-alert/10 p-2.5 text-xs text-alert">
+          {error}
+        </p>
+      )}
+
+      <Field label="種別">
+        <div className="flex gap-2">
+          {options.map(({ value, tone }) => {
+            const selected = type === value
+            const selectedClass =
+              tone === 'alert'
+                ? 'border-alert bg-alert/15 text-alert [--glow-color:var(--color-alert)]'
+                : 'border-cyan bg-cyan/15 text-cyan'
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setType(value)}
+                aria-pressed={selected}
+                className={`font-hud flex-1 rounded-sharp border py-3 text-sm font-semibold ${
+                  selected
+                    ? `glow-sm ${selectedClass}`
+                    : 'border-line bg-panel-2 text-hud-dim'
+                }`}
+              >
+                {value}
+              </button>
+            )
+          })}
+        </div>
+      </Field>
+
+      <Field label="対象日付">
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="field-input font-digit"
+        />
+      </Field>
+    </Modal>
+  )
+}
+
+/** メモの編集(spec 4.3 のメモカード) */
+export function MemoEditModal({ courseId, initialMemo = '', onSaved }) {
+  const { closeModal } = useNavigation()
+  const [memo, setMemo] = useState(initialMemo)
+  const [saving, setSaving] = useState(false)
+
+  const handleSubmit = async () => {
+    if (saving) return
+    setSaving(true)
+    try {
+      await courseApi.updateCourse(courseId, { memo })
+      closeModal()
+      onSaved?.()
+    } catch (e) {
+      console.error(e)
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Modal
+      title="メモ"
+      footer={
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={saving}
+          className="font-hud text-sm font-semibold text-cyan active:opacity-60 disabled:opacity-40"
+        >
+          保存
+        </button>
+      }
+    >
+      <textarea
+        value={memo}
+        rows={8}
+        placeholder="持ち物、課題の傾向、教員の連絡先など"
+        onChange={(e) => setMemo(e.target.value)}
+        className="field-input resize-none leading-relaxed"
+      />
+      <p className="mt-2 text-[11px] text-hud-faint">
+        空にして保存すると、メモを削除できます
       </p>
     </Modal>
   )

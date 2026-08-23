@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import ScreenLayout, { Button } from '../components/ScreenLayout.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
-import { DAYS, courseApi, semesterApi, settingsApi, timetableApi } from '../db/index.js'
+import {
+  DAYS,
+  attendanceApi,
+  courseApi,
+  semesterApi,
+  settingsApi,
+  timetableApi,
+} from '../db/index.js'
+import { AlertIcon } from '../components/icons.jsx'
 import { findCurrentPeriod } from '../db/settings.js'
 
 /** 時計の表示を更新する間隔(現在時限のハイライト用) */
@@ -17,6 +25,7 @@ export default function TimetableScreen() {
   const [periods, setPeriods] = useState([])
   const [visibleDays, setVisibleDays] = useState([])
   const [slotMap, setSlotMap] = useState(new Map())
+  const [alertCourseIds, setAlertCourseIds] = useState(new Set())
   const [now, setNow] = useState(() => new Date())
 
   const load = useCallback(async () => {
@@ -43,6 +52,16 @@ export default function TimetableScreen() {
       if (course) map.set(`${slot.day}-${slot.period}`, course)
     }
     setSlotMap(map)
+
+    // 配置済みの講義だけ、欠席上限に達しているかを調べる(spec 4.5)
+    const placedIds = [...new Set([...map.values()].map((c) => c.id))]
+    const absences = await attendanceApi.countAbsencesByCourse(placedIds)
+    const reached = new Set(
+      placedIds.filter((id) =>
+        attendanceApi.isAbsenceLimitReached(courseById.get(id), absences.get(id) ?? 0),
+      ),
+    )
+    setAlertCourseIds(reached)
   }, [])
 
   useEffect(() => {
@@ -135,6 +154,7 @@ export default function TimetableScreen() {
                     const isToday = day.value === today
                     // 今日 × 現在時限 = 今の授業。最も強く強調する
                     const isNowCell = isToday && isNowPeriod
+                    const isOverLimit = course ? alertCourseIds.has(course.id) : false
                     return (
                       <td key={day.value} className="h-20 p-0 align-top md:h-28">
                         {course ? (
@@ -143,11 +163,25 @@ export default function TimetableScreen() {
                             onClick={() => push('courseDetail', { courseId: course.id })}
                             // 見た目はテーマごとに index.css の .tt-cell が決める
                             // (ダーク: 枠線を発光 / ライト: 講義カラーを淡く敷く)
-                            className={`tt-cell flex h-full w-full flex-col items-center justify-between rounded-sharp p-1 text-center active:opacity-70 md:p-2 ${
-                              isNowCell ? 'ring-2 ring-cyan' : ''
+                            // 警告(赤)は現在時限の強調(シアン)より優先する
+                            className={`tt-cell relative flex h-full w-full flex-col items-center justify-between rounded-sharp p-1 text-center active:opacity-70 md:p-2 ${
+                              isOverLimit
+                                ? 'ring-2 ring-alert'
+                                : isNowCell
+                                  ? 'ring-2 ring-cyan'
+                                  : ''
                             }`}
                             style={{ '--course-color': course.color }}
                           >
+                            {/* 欠席が上限に達した講義は赤で警告する(spec 4.5) */}
+                            {isOverLimit && (
+                              <span
+                                className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-alert text-white"
+                                title="欠席が上限に達しています"
+                              >
+                                <AlertIcon size={11} strokeWidth={2.5} />
+                              </span>
+                            )}
                             <span className="line-clamp-3 break-all text-[10px] leading-tight font-semibold md:text-sm">
                               {course.name}
                             </span>

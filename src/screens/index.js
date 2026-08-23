@@ -11,7 +11,7 @@ import {
   ScheduleEditScreen,
   SemesterSwitchScreen,
 } from './PlaceholderScreens.jsx'
-import { AttendanceEntryModal, CoursePickerModal } from './modals.jsx'
+import { AttendanceEntryModal, CoursePickerModal, MemoEditModal } from './modals.jsx'
 
 /** 下部タブに対応する4画面 */
 export const TAB_SCREENS = {
@@ -39,4 +39,5 @@ export const STACK_SCREENS = {
 export const MODAL_SCREENS = {
   attendanceEntry: AttendanceEntryModal,
   coursePicker: CoursePickerModal,
+  memoEdit: MemoEditModal,
 }
