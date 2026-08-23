@@ -8,6 +8,7 @@ import ScheduleEditScreen from './ScheduleEditScreen.jsx'
 import SemesterSwitchScreen from './SemesterSwitchScreen.jsx'
 import CreditSettingsScreen from './CreditSettingsScreen.jsx'
 import PeriodSettingsScreen from './PeriodSettingsScreen.jsx'
+import NotificationSettingsScreen from './NotificationSettingsScreen.jsx'
 import DevDataPanel from '../DevDataPanel.jsx'
 import {
   AttendanceEntryModal,
@@ -35,6 +36,7 @@ export const STACK_SCREENS = {
   semesterSwitch: { component: SemesterSwitchScreen },
   periodSettings: { component: PeriodSettingsScreen },
   creditSettings: { component: CreditSettingsScreen },
+  notificationSettings: { component: NotificationSettingsScreen },
   devData: { component: DevDataPanel },
 }
 

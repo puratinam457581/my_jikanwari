@@ -121,3 +121,32 @@ export const DEFAULT_VISIBLE_DAYS = [false, true, true, true, true, true, true]
 
 /** 表示設定は1件しか持たないので、固定のキーで出し入れする */
 export const DISPLAY_SETTINGS_KEY = 'default'
+
+/**
+ * 朝の時間割通知を出す時刻(spec 5章「毎朝7:00固定」)。
+ * 仕様で固定と決まっているため、設定画面からは変更できない。
+ */
+export const MORNING_NOTIFY_TIME = '07:00'
+
+/**
+ * 通知の種類(spec 5章)。
+ * value は通知のON/OFF設定と、送信済み判定のキーの接頭辞に使う。
+ */
+export const NOTICE_KINDS = [
+  { value: 'morning', label: '朝の時間割', hint: `毎朝${MORNING_NOTIFY_TIME}に、その日の講義一覧を知らせます` },
+  { value: 'deadline', label: '課題の締切', hint: 'スケジュールで指定した「1日前 / 3日前」に知らせます' },
+  { value: 'absence', label: '欠席の上限', hint: '欠席数が上限に達したときに知らせます' },
+]
+
+/** 通知設定の初期値。すべてONで始める */
+export const DEFAULT_NOTIFICATION_SETTINGS = {
+  morning: true,
+  deadline: true,
+  absence: true,
+}
+
+/** アプリ内お知らせとして残す件数の上限 */
+export const NOTICE_LOG_LIMIT = 30
+
+/** 「送信済み」として覚えておく通知キーの上限(増え続けないように切り詰める) */
+export const NOTICE_SENT_LIMIT = 200

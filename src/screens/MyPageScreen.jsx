@@ -4,6 +4,7 @@ import { MoonIcon, SunIcon } from '../components/icons.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
 import { THEMES, useTheme } from '../theme/ThemeProvider.jsx'
 import { getCreditSummary, semesterApi } from '../db/index.js'
+import { getPermission } from '../notify/deliver.js'
 import { ProgressBar } from './CreditSettingsScreen.jsx'
 
 /**
@@ -15,6 +16,10 @@ export default function MyPageScreen() {
   const [loading, setLoading] = useState(true)
   const [summary, setSummary] = useState(null)
   const [semester, setSemester] = useState(null)
+
+  // 通知が使える状態かどうかを一目で分かるようにする
+  const permission = getPermission()
+  const notifyStatus = { granted: 'オン', denied: '拒否', default: '未設定' }[permission] ?? '非対応'
 
   const load = useCallback(async () => {
     const [result, active] = await Promise.all([
@@ -83,6 +88,11 @@ export default function MyPageScreen() {
         <Card title="設定">
           <LinkRow label="必要単位数・単位進捗" onClick={() => push('creditSettings')} />
           <LinkRow label="時限・曜日の設定" onClick={() => push('periodSettings')} />
+          <LinkRow
+            label="通知の設定"
+            value={notifyStatus}
+            onClick={() => push('notificationSettings')}
+          />
           <LinkRow
             label="学期の管理"
             value={semester ? `${semester.year}年度 ${semester.name}` : null}

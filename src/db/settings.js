@@ -2,6 +2,7 @@ import { getDB } from './database.js'
 import {
   STORES,
   DISPLAY_SETTINGS_KEY,
+  DEFAULT_NOTIFICATION_SETTINGS,
   DEFAULT_VISIBLE_DAYS,
   DEFAULT_PERIOD_SETTINGS,
 } from './constants.js'
@@ -118,6 +119,9 @@ export async function getDisplaySettings() {
     theme: 'dark', // 表示テーマ(デザイン仕様6.5)
     ...settings,
   }
+
+  // 通知の設定(spec 5章)。項目が増えても既存データが壊れないよう個別に埋める
+  merged.notifications = { ...DEFAULT_NOTIFICATION_SETTINGS, ...(settings?.notifications ?? {}) }
 
   // 以前の「進級要件は1つだけ」の形で保存された値を、学年ごとの形へ移す
   if (

@@ -31,6 +31,14 @@ export {
   CalendarClock as CalendarIcon,
   Moon as MoonIcon,
   Sun as SunIcon,
+  Bell as BellIcon,
+  BellOff as BellOffIcon,
+  RefreshCw as RefreshIcon,
+  Share as ShareIcon,
+  SquarePlus as AddToHomeIcon,
+  CloudOff as OfflineIcon,
+  Smartphone as PhoneIcon,
+  Info as InfoIcon,
 } from 'lucide-react'
 
 /**

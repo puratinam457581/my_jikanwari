@@ -2,6 +2,8 @@ import Sidebar from './components/Sidebar.jsx'
 import TabBar from './components/TabBar.jsx'
 import { NavigationProvider, useNavigation } from './navigation/NavigationContext.jsx'
 import { ThemeProvider } from './theme/ThemeProvider.jsx'
+import NotificationCenter from './notify/NotificationCenter.jsx'
+import PwaBanner from './pwa/PwaBanner.jsx'
 import { MODAL_SCREENS, STACK_SCREENS, TAB_SCREENS } from './screens/index.js'
 
 /**
@@ -36,7 +38,7 @@ function AppShell() {
     //   PC    : 左にサイドバー + 横幅いっぱいのコンテンツ
     <div className="app-viewport">
       <Sidebar />
-      <div className="app-frame flex flex-col">
+      <div className="app-frame relative flex flex-col">
         <div className="min-h-0 flex-1">
           {StackScreen ? (
             // key を渡すことで、別の画面に移ったとき状態がリセットされる
@@ -45,6 +47,12 @@ function AppShell() {
             <TabScreen />
           )}
         </div>
+
+        {/* アプリを開いている間に届く通知のバナー(spec 5章) */}
+        <NotificationCenter />
+
+        {/* アプリ更新・オフライン準備完了の知らせ(フェーズ9) */}
+        <PwaBanner />
 
         {!hideTabBar && <TabBar />}
 
