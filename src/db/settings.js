@@ -84,18 +84,31 @@ export async function getDisplaySettings() {
   const db = await getDB()
   const settings = await db.get(STORES.displaySettings, DISPLAY_SETTINGS_KEY)
   // 既存データに項目が無い場合(アプリ更新後など)も既定値で埋める
-  return {
+  const merged = {
     key: DISPLAY_SETTINGS_KEY,
     visibleDays: [...DEFAULT_VISIBLE_DAYS],
     // 卒業に必要な単位数
     requiredCredits: null,
-    // 進級に必要な単位数。卒業とは別に見たいことがあるため分けて持つ
-    promotionCredits: null,
-    // 学年(1〜。進級先の表示に使う)
+    // 進級に必要な単位数。学年ごとに違うので学年をキーにして持つ
+    // 例: { 1: 30, 2: 62 } = 1年→2年に30単位、2年→3年に62単位
+    promotionCreditsByGrade: {},
+    // 学年(1〜)。どの進級要件を使うかの判断に使う
     grade: null,
     theme: 'dark', // 表示テーマ(デザイン仕様6.5)
     ...settings,
   }
+
+  // 以前の「進級要件は1つだけ」の形で保存された値を、学年ごとの形へ移す
+  if (
+    merged.promotionCredits != null &&
+    merged.grade != null &&
+    Object.keys(merged.promotionCreditsByGrade).length === 0
+  ) {
+    merged.promotionCreditsByGrade = { [merged.grade]: merged.promotionCredits }
+  }
+  delete merged.promotionCredits
+
+  return merged
 }
 
 export async function updateDisplaySettings(patch) {
@@ -104,6 +117,21 @@ export async function updateDisplaySettings(patch) {
   const updated = { ...current, ...patch, key: DISPLAY_SETTINGS_KEY }
   await db.put(STORES.displaySettings, updated)
   return updated
+}
+
+/**
+ * ある学年の進級に必要な単位数を設定する。
+ * null を渡すとその学年の設定を消す。
+ */
+export async function setPromotionCredits(grade, credits) {
+  const current = await getDisplaySettings()
+  const next = { ...current.promotionCreditsByGrade }
+  if (credits == null) {
+    delete next[grade]
+  } else {
+    next[grade] = credits
+  }
+  return updateDisplaySettings({ promotionCreditsByGrade: next })
 }
 
 /** 1曜日ぶんの表示ON/OFFを切り替える */

@@ -9,6 +9,13 @@ import { getCreditSummary, settingsApi } from '../db/index.js'
 const GRADES = [1, 2, 3, 4, 5, 6]
 
 /**
+ * 進級要件を設定できる学年。
+ * 最終学年からの進級は存在しない(そこは卒業要件で見る)ので、
+ * 6年を除いた 1〜5年ぶんを用意する。使わない学年は空欄のままでよい。
+ */
+const PROMOTION_GRADES = GRADES.slice(0, -1)
+
+/**
  * 必要単位数の設定と、取得状況の表示(spec 4.11)。
  *
  * 単位を確認したいタイミングには「進級」と「卒業」の2つがあるため、
@@ -20,7 +27,8 @@ export default function CreditSettingsScreen() {
   const [loading, setLoading] = useState(true)
   const [summary, setSummary] = useState(null)
   const [grade, setGrade] = useState(null)
-  const [promotion, setPromotion] = useState('')
+  // 学年ごとの進級要件。入力途中は文字列で持つ
+  const [promotionByGrade, setPromotionByGrade] = useState({})
   const [graduation, setGraduation] = useState('')
   const [saved, setSaved] = useState(false)
 
@@ -31,7 +39,16 @@ export default function CreditSettingsScreen() {
     ])
     setSummary(result)
     setGrade(settings.grade ?? null)
-    setPromotion(settings.promotionCredits == null ? '' : String(settings.promotionCredits))
+    setPromotionByGrade(
+      Object.fromEntries(
+        PROMOTION_GRADES.map((g) => [
+          g,
+          settings.promotionCreditsByGrade[g] == null
+            ? ''
+            : String(settings.promotionCreditsByGrade[g]),
+        ]),
+      ),
+    )
     setGraduation(settings.requiredCredits == null ? '' : String(settings.requiredCredits))
     setLoading(false)
   }, [])
@@ -59,6 +76,15 @@ export default function CreditSettingsScreen() {
   const saveGrade = async (value) => {
     setGrade(value)
     await settingsApi.updateDisplaySettings({ grade: value })
+    notifySaved()
+    load()
+  }
+
+  const savePromotion = async (targetGrade) => {
+    const raw = promotionByGrade[targetGrade] ?? ''
+    const value = raw.trim() === '' ? null : Number(raw)
+    if (value !== null && (!Number.isFinite(value) || value < 0)) return
+    await settingsApi.setPromotionCredits(targetGrade, value)
     notifySaved()
     load()
   }
@@ -91,7 +117,11 @@ export default function CreditSettingsScreen() {
           title={grade ? `${grade + 1}年次への進級` : '進級'}
           progress={summary.promotion}
           earned={summary.earned}
-          emptyHint="下の「進級に必要な単位数」を入力すると表示されます"
+          emptyHint={
+            grade == null
+              ? '下で学年を選ぶと、その学年の進級要件を表示します'
+              : `下の「進級に必要な単位数」で ${grade}年 → ${grade + 1}年 の欄を入力すると表示されます`
+          }
         />
         <ProgressCard
           title="卒業"
@@ -110,13 +140,43 @@ export default function CreditSettingsScreen() {
             hint="進級先の表示に使います"
           />
 
-          <CreditInput
+          <Field
             label="進級に必要な単位数"
-            value={promotion}
-            onChange={setPromotion}
-            onSave={() => saveNumber('promotionCredits', promotion)}
-            hint="この学年を終えるまでに必要な単位数。要らなければ空欄のままで構いません"
-          />
+            hint="学年ごとに入力してください。今の学年の値が上の進捗に使われます。分からない学年は空欄で構いません"
+          >
+            <ul className="space-y-2">
+              {PROMOTION_GRADES.map((g) => {
+                const isCurrent = grade === g
+                return (
+                  <li key={g} className="flex items-center gap-2">
+                    <span
+                      className={`font-hud w-20 shrink-0 text-xs font-semibold ${
+                        isCurrent ? 'text-cyan' : 'text-hud-dim'
+                      }`}
+                    >
+                      {g}年 → {g + 1}年
+                    </span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={999}
+                      value={promotionByGrade[g] ?? ''}
+                      onChange={(e) =>
+                        setPromotionByGrade((prev) => ({ ...prev, [g]: e.target.value }))
+                      }
+                      onBlur={() => savePromotion(g)}
+                      aria-label={`${g}年から${g + 1}年への進級に必要な単位数`}
+                      className={`field-input font-digit ${
+                        isCurrent ? 'border-cyan' : ''
+                      }`}
+                    />
+                    <span className="shrink-0 text-sm text-hud-dim">単位</span>
+                  </li>
+                )
+              })}
+            </ul>
+          </Field>
 
           <CreditInput
             label="卒業に必要な単位数"

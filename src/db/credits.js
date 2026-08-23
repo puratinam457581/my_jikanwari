@@ -29,7 +29,14 @@ export async function getCreditSummary() {
     // 卒業と進級は見たいタイミングが違うので、目標を分けて持つ。
     // どちらも「これまでに取得した単位の累計」と比べる点は同じ。
     graduation: buildProgress(earned, settings.requiredCredits),
-    promotion: buildProgress(earned, settings.promotionCredits),
+    // 進級要件は学年ごとに違うため、今の学年に対応する値を使う
+    promotion: buildProgress(
+      earned,
+      settings.grade == null
+        ? null
+        : settings.promotionCreditsByGrade[settings.grade],
+    ),
+    promotionByGrade: settings.promotionCreditsByGrade,
     byGroup: summarizeByGroup(courses),
     bySemester: summarizeBySemester(courses, semesters),
     earnedCount: earnedCourses.length,
