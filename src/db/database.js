@@ -111,7 +111,9 @@ async function seedDefaults(db) {
     await db.put(STORES.displaySettings, {
       key: DISPLAY_SETTINGS_KEY,
       visibleDays: [...DEFAULT_VISIBLE_DAYS],
-      requiredCredits: null,
+      requiredCredits: null, // 卒業に必要な単位数
+      promotionCredits: null, // 進級に必要な単位数
+      grade: null, // 学年
       theme: 'dark', // 表示テーマ(デザイン仕様6.5)
     })
   }

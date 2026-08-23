@@ -87,7 +87,12 @@ export async function getDisplaySettings() {
   return {
     key: DISPLAY_SETTINGS_KEY,
     visibleDays: [...DEFAULT_VISIBLE_DAYS],
+    // 卒業に必要な単位数
     requiredCredits: null,
+    // 進級に必要な単位数。卒業とは別に見たいことがあるため分けて持つ
+    promotionCredits: null,
+    // 学年(1〜。進級先の表示に使う)
+    grade: null,
     theme: 'dark', // 表示テーマ(デザイン仕様6.5)
     ...settings,
   }

@@ -41,41 +41,37 @@ export default function MyPageScreen() {
             <EmptyState>読み込み中...</EmptyState>
           ) : (
             <>
-              <div className="mb-3 flex items-end justify-between">
-                <span className="font-digit text-3xl font-bold text-hud">
-                  {summary.earned}
-                  {summary.required != null && (
-                    <span className="ml-1.5 text-sm font-normal text-hud-dim">
-                      / {summary.required}
-                    </span>
-                  )}
-                  <span className="font-hud ml-1 text-xs text-hud-faint">単位</span>
+              <p className="font-digit text-3xl font-bold text-hud">
+                {summary.earned}
+                <span className="font-hud ml-1 text-xs text-hud-faint">単位</span>
+                <span className="font-hud ml-2 text-[11px] text-hud-faint">
+                  全学期の累計
                 </span>
-                {summary.ratio != null && (
-                  <span
-                    className="font-digit text-glow text-xl font-bold text-cyan"
-                    style={{ '--glow-color': 'var(--color-cyan)' }}
-                  >
-                    {Math.round(summary.ratio)}%
-                  </span>
-                )}
-              </div>
+              </p>
 
-              {summary.required != null ? (
-                <ProgressBar ratio={summary.ratio} />
-              ) : (
+              {/* 進級と卒業は見たいタイミングが違うので、分けて並べる */}
+              {summary.promotion.required == null && summary.graduation.required == null ? (
                 <button
                   type="button"
                   onClick={() => push('creditSettings')}
-                  className="w-full rounded-sharp border border-line bg-panel-2 py-2 text-[11px] text-hud-dim active:opacity-70"
+                  className="mt-3 w-full rounded-sharp border border-line bg-panel-2 py-2 text-[11px] text-hud-dim active:opacity-70"
                 >
-                  必要単位数を設定すると進捗が表示されます
+                  進級・卒業に必要な単位数を設定すると進捗が表示されます
                 </button>
+              ) : (
+                <div className="mt-3 space-y-3">
+                  <MiniProgress
+                    label={summary.grade ? `${summary.grade + 1}年次への進級` : '進級'}
+                    progress={summary.promotion}
+                    earned={summary.earned}
+                  />
+                  <MiniProgress
+                    label="卒業"
+                    progress={summary.graduation}
+                    earned={summary.earned}
+                  />
+                </div>
               )}
-
-              <p className="mt-2 text-[11px] text-hud-faint">
-                全学期の累計 ・ 取得済み {summary.earnedCount}件
-              </p>
             </>
           )}
         </Card>
@@ -108,6 +104,28 @@ export default function MyPageScreen() {
         </Card>
       </div>
     </ScreenLayout>
+  )
+}
+
+/** 目標1つぶんの、細い進捗表示 */
+function MiniProgress({ label, progress, earned }) {
+  if (progress.required == null) return null
+  return (
+    <div>
+      <div className="mb-1 flex items-baseline justify-between">
+        <span className="font-hud text-xs font-semibold text-hud-dim">{label}</span>
+        <span className="font-digit text-xs text-hud">
+          {earned}
+          <span className="text-hud-faint">/{progress.required}</span>
+          {progress.achieved ? (
+            <span className="ml-2 text-cyan">達成</span>
+          ) : (
+            <span className="ml-2 text-hud-faint">あと{progress.remaining}</span>
+          )}
+        </span>
+      </div>
+      <ProgressBar ratio={progress.ratio} />
+    </div>
   )
 }
 

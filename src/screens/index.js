@@ -13,7 +13,7 @@ import {
   AttendanceEntryModal,
   CoursePickerModal,
   MemoEditModal,
-  SemesterCreateModal,
+  SemesterEditModal,
 } from './modals.jsx'
 
 /** 下部タブに対応する4画面 */
@@ -43,5 +43,5 @@ export const MODAL_SCREENS = {
   attendanceEntry: AttendanceEntryModal,
   coursePicker: CoursePickerModal,
   memoEdit: MemoEditModal,
-  semesterCreate: SemesterCreateModal,
+  semesterEdit: SemesterEditModal,
 }

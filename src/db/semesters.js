@@ -35,10 +35,13 @@ export function defaultSemesterDates(year, name) {
   }
 }
 
-/** 同じ年度・同じ学期名が既に登録されているか */
-export async function semesterExists(year, name) {
+/**
+ * 同じ年度・同じ学期名が既に登録されているか。
+ * exceptId を渡すと、その学期自身は重複とみなさない(編集時に使う)。
+ */
+export async function semesterExists(year, name, exceptId = null) {
   const all = await listSemesters()
-  return all.some((s) => s.year === year && s.name === name)
+  return all.some((s) => s.year === year && s.name === name && s.id !== exceptId)
 }
 
 export async function createSemester({ name, year, startDate, endDate }) {
@@ -61,7 +64,17 @@ export async function updateSemester(id, patch) {
   const db = await getDB()
   const current = await db.get(STORES.semesters, id)
   if (!current) throw new Error(`学期が見つかりません: ${id}`)
+
   const updated = { ...current, ...patch, id: current.id }
+
+  // 年度や学期名を変えたときは、期間も既定値に合わせ直す
+  // (ユーザーが期間を直接指定した場合はそちらを尊重する)
+  const yearChanged = patch.year != null && patch.year !== current.year
+  const nameChanged = patch.name != null && patch.name !== current.name
+  if ((yearChanged || nameChanged) && !patch.startDate && !patch.endDate) {
+    Object.assign(updated, defaultSemesterDates(updated.year, updated.name))
+  }
+
   await db.put(STORES.semesters, updated)
   return updated
 }

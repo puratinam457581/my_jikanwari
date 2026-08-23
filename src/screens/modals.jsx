@@ -167,13 +167,40 @@ export function MemoEditModal({ courseId, initialMemo = '', onSaved }) {
   )
 }
 
-/** 学期の新規作成(spec 4.9: 前期・後期の2学期制) */
-export function SemesterCreateModal({ onCreated }) {
+/**
+ * 学期の作成・編集(spec 4.9: 前期・後期の2学期制)。
+ * semesterId があれば編集、なければ新規作成。
+ * 最初から入っている学期も、ここで年度・学期を直せる。
+ */
+export function SemesterEditModal({ semesterId = null, onSaved }) {
   const { closeModal } = useNavigation()
+  const isEdit = Boolean(semesterId)
+
   const [year, setYear] = useState(() => String(getAcademicYear()))
   const [name, setName] = useState('前期')
+  const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (!isEdit) return
+    let cancelled = false
+    semesterApi
+      .getSemester(semesterId)
+      .then((semester) => {
+        if (cancelled || !semester) return
+        setYear(String(semester.year))
+        setName(semester.name)
+        setLoading(false)
+      })
+      .catch((e) => {
+        console.error(e)
+        setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [semesterId, isEdit])
 
   const handleSubmit = async () => {
     const yearNumber = Number(year)
@@ -183,17 +210,21 @@ export function SemesterCreateModal({ onCreated }) {
     }
     setSaving(true)
     try {
-      if (await semesterApi.semesterExists(yearNumber, name)) {
+      if (await semesterApi.semesterExists(yearNumber, name, semesterId)) {
         setError(`${yearNumber}年度 ${name} は既に登録されています`)
         setSaving(false)
         return
       }
-      await semesterApi.createSemester({ year: yearNumber, name })
+      if (isEdit) {
+        await semesterApi.updateSemester(semesterId, { year: yearNumber, name })
+      } else {
+        await semesterApi.createSemester({ year: yearNumber, name })
+      }
       closeModal()
-      onCreated?.()
+      onSaved?.()
     } catch (e) {
       console.error(e)
-      setError('作成に失敗しました')
+      setError('保存に失敗しました')
       setSaving(false)
     }
   }
@@ -202,15 +233,15 @@ export function SemesterCreateModal({ onCreated }) {
 
   return (
     <Modal
-      title="学期を追加"
+      title={isEdit ? '学期を編集' : '学期を追加'}
       footer={
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={saving}
+          disabled={saving || loading}
           className="font-hud text-sm font-semibold text-cyan active:opacity-60 disabled:opacity-40"
         >
-          作成
+          {isEdit ? '保存' : '作成'}
         </button>
       }
     >
@@ -262,6 +293,11 @@ export function SemesterCreateModal({ onCreated }) {
       <p className="font-digit text-[11px] text-hud-faint">
         期間: {dates.startDate} 〜 {dates.endDate}
       </p>
+      {isEdit && (
+        <p className="mt-2 text-[11px] text-hud-faint">
+          この学期に登録済みの講義・出欠・時間割はそのまま残ります
+        </p>
+      )}
     </Modal>
   )
 }

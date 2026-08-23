@@ -1,24 +1,38 @@
 import { useCallback, useEffect, useState } from 'react'
 import ScreenLayout, { Card, EmptyState } from '../components/ScreenLayout.jsx'
-import { Field, FormSection } from '../components/form.jsx'
+import { CheckIcon } from '../components/icons.jsx'
+import { ChoiceField, Field, FormSection } from '../components/form.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
 import { getCreditSummary, settingsApi } from '../db/index.js'
 
+/** 学年の選択肢。医療系など6年制も想定して6年まで用意する */
+const GRADES = [1, 2, 3, 4, 5, 6]
+
 /**
  * 必要単位数の設定と、取得状況の表示(spec 4.11)。
- * 集計は学期をまたいだ累計で行う。
+ *
+ * 単位を確認したいタイミングには「進級」と「卒業」の2つがあるため、
+ * 目標をそれぞれ設定でき、別々に進捗を見られるようにしている。
+ * 集計はどちらも「学期をまたいだ取得単位の累計」と比べる。
  */
 export default function CreditSettingsScreen() {
   const { push } = useNavigation()
   const [loading, setLoading] = useState(true)
   const [summary, setSummary] = useState(null)
-  const [required, setRequired] = useState('')
+  const [grade, setGrade] = useState(null)
+  const [promotion, setPromotion] = useState('')
+  const [graduation, setGraduation] = useState('')
   const [saved, setSaved] = useState(false)
 
   const load = useCallback(async () => {
-    const result = await getCreditSummary()
+    const [result, settings] = await Promise.all([
+      getCreditSummary(),
+      settingsApi.getDisplaySettings(),
+    ])
     setSummary(result)
-    setRequired(result.required == null ? '' : String(result.required))
+    setGrade(settings.grade ?? null)
+    setPromotion(settings.promotionCredits == null ? '' : String(settings.promotionCredits))
+    setGraduation(settings.requiredCredits == null ? '' : String(settings.requiredCredits))
     setLoading(false)
   }, [])
 
@@ -29,13 +43,23 @@ export default function CreditSettingsScreen() {
     })
   }, [load])
 
-  /** 入力欄から離れたタイミングで保存する */
-  const handleSaveRequired = async () => {
-    const value = required.trim() === '' ? null : Number(required)
-    if (value !== null && (!Number.isFinite(value) || value < 0)) return
-    await settingsApi.updateDisplaySettings({ requiredCredits: value })
+  const notifySaved = () => {
     setSaved(true)
     setTimeout(() => setSaved(false), 1500)
+  }
+
+  const saveNumber = async (key, raw) => {
+    const value = raw.trim() === '' ? null : Number(raw)
+    if (value !== null && (!Number.isFinite(value) || value < 0)) return
+    await settingsApi.updateDisplaySettings({ [key]: value })
+    notifySaved()
+    load()
+  }
+
+  const saveGrade = async (value) => {
+    setGrade(value)
+    await settingsApi.updateDisplaySettings({ grade: value })
+    notifySaved()
     load()
   }
 
@@ -47,75 +71,65 @@ export default function CreditSettingsScreen() {
     )
   }
 
-  const ratio = summary.ratio ?? 0
-
   return (
     <ScreenLayout title="必要単位数・進捗" showBack>
       <div className="p-3 pb-10">
-        <FormSection title="卒業/進級に必要な単位数">
-          <Field
-            label="必要単位数"
-            hint="学部・学科の要件に合わせて入力してください。空欄にすると進捗バーは表示されません"
-          >
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={999}
-                value={required}
-                onChange={(e) => setRequired(e.target.value)}
-                onBlur={handleSaveRequired}
-                className="field-input font-digit"
-              />
-              <span className="shrink-0 text-sm text-hud-dim">単位</span>
-            </div>
-          </Field>
-          {saved && <p className="text-[11px] text-cyan">保存しました</p>}
-        </FormSection>
-
-        <Card title="取得状況(全学期の累計)">
-          <div className="mb-3 flex items-end justify-between">
-            <span className="font-digit text-3xl font-bold text-hud">
-              {summary.earned}
-              {summary.required != null && (
-                <span className="ml-1.5 text-sm font-normal text-hud-dim">
-                  / {summary.required}
-                </span>
-              )}
-              <span className="font-hud ml-1 text-xs text-hud-faint">単位</span>
-            </span>
-            {summary.ratio != null && (
-              <span
-                className="font-digit text-glow text-xl font-bold text-cyan"
-                style={{ '--glow-color': 'var(--color-cyan)' }}
-              >
-                {Math.round(ratio)}%
-              </span>
-            )}
-          </div>
-
-          {summary.required != null ? (
-            <>
-              <ProgressBar ratio={ratio} />
-              <p className="mt-2 text-[11px] text-hud-dim">
-                あと <span className="font-digit text-cyan">{summary.remaining}</span>{' '}
-                単位で要件を満たします
-              </p>
-            </>
-          ) : (
-            <p className="text-[11px] text-hud-faint">
-              必要単位数を入力すると、進捗バーが表示されます
-            </p>
-          )}
-
-          <p className="mt-3 border-t border-line pt-2 text-[11px] text-hud-faint">
-            取得済み {summary.earnedCount}件 / 登録済み {summary.totalCount}件
-            ・未取得の登録済み講義は {summary.pending}単位
+        {/* --- 現在の取得単位 --- */}
+        <Card title="取得単位(全学期の累計)">
+          <p className="font-digit text-3xl font-bold text-hud">
+            {summary.earned}
+            <span className="font-hud ml-1 text-xs text-hud-faint">単位</span>
+          </p>
+          <p className="mt-2 text-[11px] text-hud-faint">
+            取得済み {summary.earnedCount}件 / 登録済み {summary.totalCount}件 ・
+            未取得の登録済み講義は {summary.pending}単位
           </p>
         </Card>
 
-        {/* 群ごとの内訳。卒業要件は群ごとに定められていることが多いため参考として出す */}
+        {/* --- 進級 / 卒業 の進捗 --- */}
+        <ProgressCard
+          title={grade ? `${grade + 1}年次への進級` : '進級'}
+          progress={summary.promotion}
+          earned={summary.earned}
+          emptyHint="下の「進級に必要な単位数」を入力すると表示されます"
+        />
+        <ProgressCard
+          title="卒業"
+          progress={summary.graduation}
+          earned={summary.earned}
+          emptyHint="下の「卒業に必要な単位数」を入力すると表示されます"
+        />
+
+        {/* --- 設定 --- */}
+        <FormSection title="目標の設定">
+          <ChoiceField
+            label="学年"
+            value={grade}
+            onChange={saveGrade}
+            options={GRADES.map((g) => ({ value: g, label: `${g}年` }))}
+            hint="進級先の表示に使います"
+          />
+
+          <CreditInput
+            label="進級に必要な単位数"
+            value={promotion}
+            onChange={setPromotion}
+            onSave={() => saveNumber('promotionCredits', promotion)}
+            hint="この学年を終えるまでに必要な単位数。要らなければ空欄のままで構いません"
+          />
+
+          <CreditInput
+            label="卒業に必要な単位数"
+            value={graduation}
+            onChange={setGraduation}
+            onSave={() => saveNumber('requiredCredits', graduation)}
+            hint="学部・学科の卒業要件に合わせて入力してください"
+          />
+
+          {saved && <p className="text-[11px] text-cyan">保存しました</p>}
+        </FormSection>
+
+        {/* --- 群ごとの内訳 --- */}
         <Card title="科目区分(群)ごとの取得単位">
           <ul className="space-y-2">
             {summary.byGroup.rows.map((row) => (
@@ -144,6 +158,7 @@ export default function CreditSettingsScreen() {
           </ul>
         </Card>
 
+        {/* --- 学期ごとの内訳 --- */}
         <Card title="学期ごとの内訳">
           {summary.bySemester.length === 0 ? (
             <EmptyState>学期が登録されていません</EmptyState>
@@ -203,6 +218,75 @@ export default function CreditSettingsScreen() {
         </Card>
       </div>
     </ScreenLayout>
+  )
+}
+
+/** 目標1つぶんの進捗カード */
+function ProgressCard({ title, progress, earned, emptyHint }) {
+  return (
+    <Card title={title}>
+      {progress.required == null ? (
+        <p className="text-[11px] text-hud-faint">{emptyHint}</p>
+      ) : (
+        <>
+          <div className="mb-3 flex items-end justify-between">
+            <span className="font-digit text-2xl font-bold text-hud">
+              {earned}
+              <span className="ml-1.5 text-sm font-normal text-hud-dim">
+                / {progress.required}
+              </span>
+              <span className="font-hud ml-1 text-xs text-hud-faint">単位</span>
+            </span>
+            {progress.achieved ? (
+              <span className="font-hud flex items-center gap-1 rounded-sharp border border-cyan bg-cyan/10 px-2 py-0.5 text-xs font-semibold text-cyan">
+                <CheckIcon size={13} strokeWidth={3} />
+                達成
+              </span>
+            ) : (
+              <span
+                className="font-digit text-glow text-xl font-bold text-cyan"
+                style={{ '--glow-color': 'var(--color-cyan)' }}
+              >
+                {Math.round(progress.ratio)}%
+              </span>
+            )}
+          </div>
+
+          <ProgressBar ratio={progress.ratio} />
+
+          <p className="mt-2 text-[11px] text-hud-dim">
+            {progress.achieved ? (
+              '必要な単位数に達しています'
+            ) : (
+              <>
+                あと <span className="font-digit text-cyan">{progress.remaining}</span> 単位
+              </>
+            )}
+          </p>
+        </>
+      )}
+    </Card>
+  )
+}
+
+/** 単位数の入力欄。入力欄から離れたタイミングで保存する */
+function CreditInput({ label, value, onChange, onSave, hint }) {
+  return (
+    <Field label={label} hint={hint}>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={999}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={onSave}
+          className="field-input font-digit"
+        />
+        <span className="shrink-0 text-sm text-hud-dim">単位</span>
+      </div>
+    </Field>
   )
 }
 

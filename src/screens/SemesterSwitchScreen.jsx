@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import ScreenLayout, { Card, EmptyState } from '../components/ScreenLayout.jsx'
-import { CheckIcon, TrashIcon } from '../components/icons.jsx'
+import { CheckIcon, PencilIcon, TrashIcon } from '../components/icons.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
 import { courseApi, semesterApi } from '../db/index.js'
 
@@ -67,7 +67,7 @@ export default function SemesterSwitchScreen() {
       rightAction={
         <button
           type="button"
-          onClick={() => openModal('semesterCreate', { onCreated: load })}
+          onClick={() => openModal('semesterEdit', { onSaved: load })}
           className="font-hud text-sm font-semibold text-cyan active:opacity-60"
         >
           追加
@@ -123,6 +123,18 @@ export default function SemesterSwitchScreen() {
                 </span>
               </button>
 
+              {/* 年度・学期名の修正。最初から入っている学期もここで直せる */}
+              <button
+                type="button"
+                onClick={() =>
+                  openModal('semesterEdit', { semesterId: semester.id, onSaved: load })
+                }
+                aria-label={`${semester.year}年度 ${semester.name} を編集`}
+                className="shrink-0 text-cyan active:opacity-60"
+              >
+                <PencilIcon size={16} strokeWidth={1.5} />
+              </button>
+
               {/* 誤って作った学期を消せるよう、講義が0件のときだけ削除を出す */}
               {!semester.isActive && semester.courseCount === 0 && (
                 <button
@@ -141,7 +153,7 @@ export default function SemesterSwitchScreen() {
         <Card className="mt-4">
           <p className="text-xs leading-relaxed text-hud-dim">
             学期を切り替えても、過去の学期の時間割・出欠記録は削除されません。
-            いつでもここから戻って参照できます。
+            いつでもここから戻って参照できます。年度や学期は鉛筆アイコンから直せます。
           </p>
           <p className="mt-2 text-xs leading-relaxed text-hud-faint">
             講義リストは学期ごとに独立しています。新しい学期では、同じ名前の講義でも

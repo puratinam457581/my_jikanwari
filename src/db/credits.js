@@ -18,7 +18,6 @@ export async function getCreditSummary() {
 
   const earnedCourses = courses.filter((c) => c.creditEarned)
   const earned = sumCredits(earnedCourses)
-  const required = settings.requiredCredits ?? null
 
   // 「取得済みではないが登録済み」の単位数。今学期ぶんの見込みを見るのに使う
   const pending = sumCredits(courses.filter((c) => !c.creditEarned))
@@ -26,13 +25,32 @@ export async function getCreditSummary() {
   return {
     earned,
     pending,
-    required,
-    ratio: required && required > 0 ? Math.min(100, (earned / required) * 100) : null,
-    remaining: required && required > 0 ? Math.max(0, required - earned) : null,
+    grade: settings.grade ?? null,
+    // 卒業と進級は見たいタイミングが違うので、目標を分けて持つ。
+    // どちらも「これまでに取得した単位の累計」と比べる点は同じ。
+    graduation: buildProgress(earned, settings.requiredCredits),
+    promotion: buildProgress(earned, settings.promotionCredits),
     byGroup: summarizeByGroup(courses),
     bySemester: summarizeBySemester(courses, semesters),
     earnedCount: earnedCourses.length,
     totalCount: courses.length,
+  }
+}
+
+/**
+ * 目標単位数に対する進み具合。
+ * 目標が未設定(null)のときは、比率も残りも出さない。
+ */
+function buildProgress(earned, required) {
+  const target = Number(required)
+  if (!Number.isFinite(target) || target <= 0) {
+    return { required: null, ratio: null, remaining: null, achieved: false }
+  }
+  return {
+    required: target,
+    ratio: Math.min(100, (earned / target) * 100),
+    remaining: Math.max(0, target - earned),
+    achieved: earned >= target,
   }
 }
 
