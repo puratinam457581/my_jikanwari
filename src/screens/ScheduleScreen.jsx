@@ -1,5 +1,9 @@
 import { useState } from 'react'
-import ScreenLayout, { EmptyState, FloatingActionButton } from '../components/ScreenLayout.jsx'
+import ScreenLayout, {
+  Button,
+  EmptyState,
+  FloatingActionButton,
+} from '../components/ScreenLayout.jsx'
 import { TagIcon } from '../components/icons.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
 import { DUMMY_SCHEDULES, findDummyCourse } from '../data/dummy.js'
@@ -22,13 +26,9 @@ export default function ScheduleScreen() {
     <ScreenLayout
       title="スケジュール"
       rightAction={
-        <button
-          type="button"
-          onClick={() => setShowDone((v) => !v)}
-          className="rounded-full border border-neutral-300 px-2.5 py-1 text-[11px] font-medium text-neutral-600 active:bg-neutral-100"
-        >
+        <Button onClick={() => setShowDone((v) => !v)}>
           {showDone ? '未完了' : 'すべて'}
-        </button>
+        </Button>
       }
     >
       <div className="p-3">
@@ -36,7 +36,11 @@ export default function ScheduleScreen() {
 
         {groups.map(({ label, entries }) => (
           <div key={label} className="mb-4">
-            <h2 className="mb-2 px-1 text-xs font-bold text-neutral-500">{label}</h2>
+            <h2 className="font-hud mb-2 flex items-center gap-2 px-1 text-xs font-semibold tracking-widest text-cyan">
+              {label}
+              <span className="h-px flex-1 bg-line-glow" />
+            </h2>
+
             <ul className="space-y-2">
               {entries.map((item) => {
                 const course = findDummyCourse(item.courseId)
@@ -46,13 +50,14 @@ export default function ScheduleScreen() {
                     <button
                       type="button"
                       onClick={() => push('scheduleEdit', { scheduleId: item.id })}
-                      className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm active:bg-neutral-50"
+                      className="flex w-full items-center gap-3 rounded-panel border border-line bg-panel/80 p-3 text-left active:bg-panel-2"
                     >
-                      <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-full bg-sky-50 leading-none">
-                        <span className="text-sm font-bold text-sky-600">
+                      {/* 日付バッジ(spec 4.10: 円形+日付+曜日) */}
+                      <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-sharp border border-cyan/40 bg-cyan/5 leading-none">
+                        <span className="font-digit text-sm font-bold text-cyan">
                           {due.getDate()}
                         </span>
-                        <span className="mt-0.5 text-[9px] text-sky-500">
+                        <span className="font-hud mt-0.5 text-[9px] text-hud-dim">
                           {DAY_LABELS[due.getDay()]}
                         </span>
                       </span>
@@ -60,28 +65,26 @@ export default function ScheduleScreen() {
                       <span className="min-w-0 flex-1">
                         <span
                           className={`block truncate text-sm font-medium ${
-                            item.done
-                              ? 'text-neutral-400 line-through'
-                              : 'text-neutral-800'
+                            item.done ? 'text-hud-faint line-through' : 'text-hud'
                           }`}
                         >
                           {item.title}
                         </span>
-                        <span className="mt-0.5 flex items-center gap-2 text-[11px] text-neutral-500">
-                          <span>
+                        <span className="mt-1 flex items-center gap-2 text-[11px] text-hud-dim">
+                          <span className="font-digit">
                             {String(due.getHours()).padStart(2, '0')}:
                             {String(due.getMinutes()).padStart(2, '0')}
                           </span>
                           {course && (
-                            <span className="flex min-w-0 items-center gap-0.5">
-                              <TagIcon width={12} height={12} />
+                            <span className="flex min-w-0 items-center gap-1">
+                              <TagIcon size={11} strokeWidth={1.5} />
                               <span className="truncate">{course.name}</span>
                             </span>
                           )}
                         </span>
                       </span>
 
-                      <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] text-neutral-600">
+                      <span className="font-hud shrink-0 rounded-sharp border border-line bg-panel-2 px-2 py-0.5 text-[10px] text-hud-dim">
                         {item.category}
                       </span>
                     </button>
@@ -92,7 +95,7 @@ export default function ScheduleScreen() {
           </div>
         ))}
 
-        <p className="px-2 text-center text-[11px] text-neutral-400">
+        <p className="px-2 text-center text-[11px] text-hud-faint">
           フェーズ2: 表示中の予定はダミーです
         </p>
       </div>

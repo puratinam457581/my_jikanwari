@@ -14,26 +14,45 @@ export default function TabBar() {
 
   return (
     <nav
-      className="shrink-0 border-t border-neutral-200 bg-white"
+      className="relative shrink-0 border-t border-line bg-void/90 backdrop-blur-sm"
       // iPhoneのホームバーと重ならないよう、下端に安全余白を足す
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
+      {/* タブバー上端の発光ライン */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{
+          background:
+            'linear-gradient(90deg, transparent, rgba(0,240,255,0.45), transparent)',
+        }}
+      />
+
       <ul className="flex">
         {TABS.map(({ key, label }) => {
           const Icon = ICONS[key]
           const active = tab === key
           return (
-            <li key={key} className="flex-1">
+            <li key={key} className="relative flex-1">
               <button
                 type="button"
                 onClick={() => setTab(key)}
                 aria-current={active ? 'page' : undefined}
-                className={`flex w-full flex-col items-center gap-0.5 py-2 ${
-                  active ? 'text-sky-600' : 'text-neutral-400'
+                className={`flex w-full flex-col items-center gap-1 py-2 ${
+                  active ? 'text-cyan' : 'text-hud-faint'
                 }`}
               >
-                <Icon width={22} height={22} />
-                <span className="text-[10px] font-medium">{label}</span>
+                {/* 選択中のタブは上端に発光するバーを出す(デザイン仕様3.2) */}
+                {active && (
+                  <span
+                    aria-hidden
+                    className="glow-sm absolute inset-x-4 top-0 h-0.5 bg-cyan"
+                  />
+                )}
+                <Icon size={21} strokeWidth={1.5} />
+                <span className="font-hud text-[10px] font-semibold tracking-wide">
+                  {label}
+                </span>
               </button>
             </li>
           )

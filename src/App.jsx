@@ -27,7 +27,7 @@ function AppShell() {
   const hideTabBar = stackEntry?.hideTabBar === true
 
   return (
-    <div className="flex h-full flex-col bg-neutral-100">
+    <div className="flex h-full flex-col">
       <div className="min-h-0 flex-1">
         {StackScreen ? (
           // key を渡すことで、別の画面に移ったとき状態がリセットされる

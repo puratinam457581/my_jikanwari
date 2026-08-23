@@ -2,6 +2,7 @@
 
 このファイルは Claude Code がこのリポジトリで作業する際の運用ルールです。
 **機能仕様の正典は [spec.md](spec.md)。** 実装内容の判断は必ず spec.md を参照すること。
+**視覚デザインの正典は [ui-design-spec.md](ui-design-spec.md)。** 配色・フォント・装飾はこちらに従う(機能仕様は変更しない)。
 本ファイルには spec.md の内容を複製せず、「守るべきルール」「現在の状態」「コマンド」のみを記載する。
 
 ---
@@ -32,11 +33,13 @@
 | レイヤー | 採用技術 |
 |---|---|
 | フレームワーク | React(関数コンポーネント + Hooks) |
-| スタイリング | Tailwind CSS |
+| スタイリング | Tailwind CSS(テーマ定義は src/index.css の @theme) |
 | ビルド | Vite |
 | PWA | vite-plugin-pwa(Service Worker / manifest 自動生成) |
 | 永続化 | IndexedDB(ラッパーに `idb`) |
 | バックアップ | JSON エクスポート/インポートを自前実装 |
+| アイコン | lucide-react(ISC) |
+| フォント | Rajdhani / Share Tech Mono(SIL OFL、public/fonts に同梱) |
 | 通知 | Service Worker + Notification API(ローカル通知ベース) |
 | ホスティング | GitHub Pages または Cloudflare Pages(無料枠) |
 
@@ -81,6 +84,7 @@ npm run preview   # ビルド結果のローカル確認(PWA動作確認はこ�
 - [x] フェーズ0: プロジェクト初期化(Vite 8 + React 19 + Tailwind CSS 4)
 - [x] フェーズ1: データ層構築(IndexedDB / idb)
 - [x] フェーズ2: 画面遷移の骨組み(自前ナビゲーション)
+- [x] UIデザイン適用(ui-design-spec.md / SF・HUD調のダークテーマ)
 - [ ] フェーズ3: 講義リスト・講義編集フォーム
 - [ ] フェーズ4〜11: 未着手
 

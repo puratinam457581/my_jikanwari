@@ -59,19 +59,24 @@ export const NOTIFY_TIMINGS = {
   THREE_DAYS: '3日前',
 }
 
-/** 講義カラーのプリセット(spec 4.6: パステル調6〜8色) */
+/**
+ * 講義カラーのプリセット(spec 4.6)。
+ * ダーク背景で発光させて使うため、彩度の高いビビッド系を採用している
+ * (spec 4.6 の「パステル調」からの変更はユーザー承認済み)。
+ * UIのアクセント色(シアン/アラート赤)とは紛らわしくならない色域を選んでいる。
+ */
 export const PRESET_COLORS = [
-  '#F8B4B4', // 赤
-  '#FBD5A5', // 橙
-  '#FDE68A', // 黄
-  '#A7E3B4', // 緑
-  '#A3D8F4', // 青
-  '#C4B5FD', // 紫
-  '#F9A8D4', // 桃
-  '#CBD5E1', // 灰
+  '#FF6B6B', // レッド
+  '#FF9F45', // オレンジ
+  '#FFD93D', // イエロー
+  '#4ADE80', // グリーン
+  '#2DD4BF', // ティール
+  '#38BDF8', // スカイ
+  '#A78BFA', // バイオレット
+  '#F472B6', // ピンク
 ]
 
-export const DEFAULT_COLOR = PRESET_COLORS[4]
+export const DEFAULT_COLOR = PRESET_COLORS[5]
 
 /** 時限設定の初期値(spec 4.1 の例「1限 09:00-10:40」に合わせた仮の時刻) */
 export const DEFAULT_PERIOD_SETTINGS = [

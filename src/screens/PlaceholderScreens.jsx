@@ -10,8 +10,8 @@ import { findDummyCourse } from '../data/dummy.js'
 function Placeholder({ phase, description }) {
   return (
     <Card>
-      <p className="text-sm text-neutral-700">{description}</p>
-      <p className="mt-2 inline-block rounded-full bg-neutral-100 px-2.5 py-1 text-[11px] font-medium text-neutral-500">
+      <p className="text-sm leading-relaxed text-hud-dim">{description}</p>
+      <p className="font-hud mt-3 inline-block rounded-sharp border border-cyan/40 bg-cyan/5 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-cyan">
         {phase} で実装
       </p>
     </Card>
@@ -26,7 +26,7 @@ export function CourseEditScreen({ courseId }) {
       title={course ? '講義を編集' : '講義を追加'}
       showBack
       rightAction={
-        <span className="text-[11px] font-medium text-neutral-300">保存</span>
+        <span className="font-hud text-[11px] font-semibold text-hud-faint">保存</span>
       }
     >
       <div className="p-3">
@@ -50,7 +50,7 @@ export function ScheduleEditScreen({ scheduleId, courseId }) {
       title={scheduleId ? '予定を編集' : '予定を追加'}
       showBack
       rightAction={
-        <span className="text-[11px] font-medium text-neutral-300">保存</span>
+        <span className="font-hud text-[11px] font-semibold text-hud-faint">保存</span>
       }
     >
       <div className="p-3">

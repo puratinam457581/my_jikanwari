@@ -14,12 +14,10 @@ export function AttendanceEntryModal() {
   return (
     <Modal
       title="出欠を登録"
-      footer={<span className="text-sm font-medium text-neutral-300">登録</span>}
+      footer={<span className="font-hud text-sm font-semibold text-hud-faint">登録</span>}
     >
-      <p className="text-sm text-neutral-700">
-        出席/欠席の選択と、対象日付の指定を行います。
-      </p>
-      <p className="mt-2 inline-block rounded-full bg-neutral-100 px-2.5 py-1 text-[11px] font-medium text-neutral-500">
+      <p className="text-sm text-hud-dim">出席/欠席の選択と、対象日付の指定を行います。</p>
+      <p className="font-hud mt-3 inline-block rounded-sharp border border-cyan/40 bg-cyan/5 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-cyan">
         フェーズ5 で実装
       </p>
     </Modal>
@@ -41,28 +39,31 @@ export function CoursePickerModal({ day, period }) {
           closeModal()
           push('courseEdit', { day, period })
         }}
-        className="mb-3 w-full rounded-xl bg-sky-500 py-2.5 text-sm font-medium text-white active:bg-sky-600"
+        className="font-hud glow-sm mb-4 w-full rounded-sharp border border-electric bg-electric/20 py-2.5 text-sm font-semibold tracking-wide text-hud active:opacity-70 [--glow-color:var(--color-electric)]"
       >
         新しい講義を作成して配置
       </button>
 
-      <p className="mb-2 text-xs font-bold text-neutral-500">登録済みの講義から選ぶ</p>
+      <p className="font-hud mb-2 text-xs font-semibold tracking-widest text-cyan">登録済みの講義から選ぶ</p>
       <ul className="space-y-1.5">
         {DUMMY_COURSES.map((course) => (
           <li key={course.id}>
             <button
               type="button"
               onClick={closeModal}
-              className="flex w-full items-center gap-2 rounded-xl border border-neutral-200 p-2.5 text-left active:bg-neutral-50"
+              className="flex w-full items-center gap-2.5 rounded-sharp border border-line bg-panel/80 p-2.5 text-left active:bg-panel-2"
             >
               <span
-                className="h-4 w-4 shrink-0 rounded"
-                style={{ backgroundColor: course.color }}
+                className="h-4 w-4 shrink-0 rounded-sharp"
+                style={{
+                  backgroundColor: course.color,
+                  boxShadow: `0 0 8px -1px ${course.color}`,
+                }}
               />
-              <span className="min-w-0 flex-1 truncate text-sm text-neutral-800">
+              <span className="min-w-0 flex-1 truncate text-sm text-hud">
                 {course.name}
               </span>
-              <span className="shrink-0 text-[11px] text-neutral-400">
+              <span className="shrink-0 text-[11px] text-hud-faint">
                 {course.room || '未登録'}
               </span>
             </button>
@@ -70,7 +71,7 @@ export function CoursePickerModal({ day, period }) {
         ))}
       </ul>
 
-      <p className="mt-3 text-center text-[11px] text-neutral-400">
+      <p className="mt-3 text-center text-[11px] text-hud-faint">
         フェーズ2: 選択しても配置はされません(フェーズ4で実装)
       </p>
     </Modal>

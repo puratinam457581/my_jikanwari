@@ -1,6 +1,89 @@
 @import 'tailwindcss';
 
-/* ---- アプリ全体の基本スタイル(モバイルファースト) ---- */
+/* ============================================================
+   フォント(同梱)
+   外部サーバーから読まず、public/fonts/ のファイルを使う。
+   → オフラインでも確実に表示される(CLAUDE.md 絶対制約4)
+   いずれも latin(英数字)のみを収録しているため、
+   日本語は下の font-family 指定で自動的にシステムフォントへ回る。
+   ============================================================ */
+
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/rajdhani-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/rajdhani-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/rajdhani-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Share Tech Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/share-tech-mono-400.woff2') format('woff2');
+}
+
+/* ============================================================
+   テーマ定義
+   色はすべてここで名前を付け、画面側では bg-panel / text-hud のように
+   意味のある名前で使う。後から色味を変えたくなったらここだけ直せばよい。
+   ============================================================ */
+
+@theme {
+  /* --- 背景の階層(奥 → 手前) --- */
+  --color-void: #070b14; /* 最背面。ほぼ黒の濃紺 */
+  --color-deep: #0a0e1a; /* アプリの基本背景 */
+  --color-panel: #111827; /* カード・パネル */
+  --color-panel-2: #1a1f2e; /* パネル上の一段明るい面(入力欄など) */
+
+  /* --- 罫線 --- */
+  --color-line: #1f2937; /* 通常の区切り線 */
+  --color-line-glow: rgba(0, 240, 255, 0.22); /* 発光する細い線 */
+
+  /* --- 文字 --- */
+  --color-hud: #e5e7eb; /* 本文。白に近いグレー */
+  --color-hud-dim: #94a3b8; /* 補助情報 */
+  --color-hud-faint: #64748b; /* さらに弱い情報・プレースホルダー */
+
+  /* --- アクセント(ネオン) --- */
+  --color-cyan: #00f0ff; /* 主要アクセント・選択中・発光線 */
+  --color-electric: #2d5fff; /* ボタン・リンク・アクティブなタブ */
+  --color-purple: #b24bff; /* サブアクセント */
+  --color-alert: #ff3b5c; /* 警告専用(欠席上限到達など) */
+
+  /* --- フォント --- */
+  /* 見出し・ラベル用。英数字は Rajdhani、日本語はシステムフォントへ回る */
+  --font-hud:
+    'Rajdhani', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP',
+    'Yu Gothic', sans-serif;
+  /* 数値表示用(計器盤風の等幅) */
+  --font-digit:
+    'Share Tech Mono', ui-monospace, 'SFMono-Regular', 'Hiragino Sans', 'Noto Sans JP',
+    monospace;
+  /* 本文・長文用。可読性を優先し装飾フォントは使わない */
+  --font-body:
+    -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic',
+    sans-serif;
+
+  /* --- 角丸。シャープさを優先し最小限に(デザイン仕様3.1) --- */
+  --radius-sharp: 2px;
+  --radius-panel: 4px;
+}
+
 @layer base {
   html,
   body,
@@ -9,21 +92,72 @@
   }
 
   body {
-    /* iOSでの慣性スクロール・ゴムバンド挙動を抑えつつ、日本語フォントを優先 */
-    font-family:
-      -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP',
-      'Yu Gothic', sans-serif;
-    background-color: #f5f5f7;
-    color: #1c1c1e;
+    font-family: var(--font-body);
+    color: var(--color-hud);
+    background-color: var(--color-deep);
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: none;
-    /* スクロールは画面内の本文エリアだけに任せ、ページ全体は動かさない
-       (ヘッダーとタブバーを固定するため) */
+    /* スクロールは画面内の本文エリアだけに任せ、ページ全体は動かさない */
     overflow: hidden;
+
+    /* 背景の薄いグリッド(デザイン仕様3.4)。
+       画像を使わずCSSのグラデーションだけで描くので描画負荷はほぼゼロ */
+    background-image:
+      linear-gradient(rgba(0, 240, 255, 0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 240, 255, 0.028) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-attachment: fixed;
   }
 
-  /* iOSでのタップ時のハイライトを消す */
   button {
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 入力欄の見た目をiOS標準から切り離す */
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+    color: inherit;
+    background-color: transparent;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-hud-faint);
+  }
+}
+
+@layer utilities {
+  /* 見出し・ラベル用の書体。英字は少し字間を空けると計器盤らしくなる */
+  .font-hud {
+    font-family: var(--font-hud);
+    letter-spacing: 0.02em;
+  }
+
+  /* 数値表示用の書体 */
+  .font-digit {
+    font-family: var(--font-digit);
+    letter-spacing: 0.04em;
+  }
+
+  /* 枠線を発光させる(デザイン仕様3.2)。強さは3段階 */
+  .glow-sm {
+    box-shadow: 0 0 6px -1px var(--glow-color, var(--color-cyan));
+  }
+  .glow {
+    box-shadow:
+      0 0 10px -2px var(--glow-color, var(--color-cyan)),
+      inset 0 0 12px -8px var(--glow-color, var(--color-cyan));
+  }
+  .glow-lg {
+    box-shadow:
+      0 0 18px -3px var(--glow-color, var(--color-cyan)),
+      inset 0 0 16px -8px var(--glow-color, var(--color-cyan));
+  }
+
+  /* 文字自体をほのかに光らせる。大きい文字にだけ使う(小さい文字は読みにくくなる) */
+  .text-glow {
+    text-shadow: 0 0 12px var(--glow-color, var(--color-cyan));
   }
 }

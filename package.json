@@ -9,6 +9,7 @@
   "description": "大学の週間時間割・出欠・課題・単位取得状況を管理するPWA",
   "dependencies": {
     "idb": "^8.0.3",
+    "lucide-react": "^1.33.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

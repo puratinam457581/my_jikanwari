@@ -156,7 +156,7 @@ export default function DevDataPanel() {
     <ScreenLayout title="データ層 動作確認" showBack>
     <div className="mx-auto max-w-md p-4 pb-24 text-sm">
       {error && (
-        <p className="mb-3 rounded-lg bg-red-100 p-2 text-xs text-red-700">{error}</p>
+        <p className="mb-3 rounded-sharp border border-alert/60 bg-alert/10 p-2 text-xs text-alert">{error}</p>
       )}
 
       <Card title="学期 (semesters)">
@@ -165,18 +165,18 @@ export default function DevDataPanel() {
             <strong>
               {semester.year}年度 {semester.name}
             </strong>
-            <span className="ml-2 text-xs text-neutral-500">
+            <span className="ml-2 text-xs text-hud-dim">
               {semester.startDate} 〜 {semester.endDate}
             </span>
           </p>
         ) : (
-          <p className="text-neutral-500">未作成</p>
+          <p className="text-hud-dim">未作成</p>
         )}
       </Card>
 
       <Card title="設定 (periodSettings / displaySettings)">
         <p>時限数: {periods.length}</p>
-        <ul className="mt-1 text-xs text-neutral-600">
+        <ul className="mt-1 text-xs text-hud-dim">
           {periods.map((p) => (
             <li key={p.period}>
               {p.period}限 {p.startTime} - {p.endTime}
@@ -208,20 +208,20 @@ export default function DevDataPanel() {
               count?.absent ?? 0,
             )
             return (
-              <li key={course.id} className="rounded-lg border border-neutral-200 p-2">
+              <li key={course.id} className="rounded-lg border border-line p-2">
                 <div className="flex items-center gap-2">
                   <span
-                    className="inline-block h-4 w-4 shrink-0 rounded"
+                    className="inline-block h-4 w-4 shrink-0 rounded-sharp"
                     style={{ backgroundColor: course.color }}
                   />
                   <span className="font-medium">{course.name}</span>
-                  <span className="text-xs text-neutral-500">{course.room}</span>
+                  <span className="text-xs text-hud-dim">{course.room}</span>
                 </div>
-                <p className="mt-1 text-xs text-neutral-600">
+                <p className="mt-1 text-xs text-hud-dim">
                   出席 {count?.present ?? 0} / 欠席 {count?.absent ?? 0}(上限{' '}
                   {course.absenceLimit})
                   {limitReached && (
-                    <span className="ml-1 font-bold text-red-600">上限到達</span>
+                    <span className="ml-1 font-bold text-alert">上限到達</span>
                   )}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1">
@@ -254,7 +254,7 @@ export default function DevDataPanel() {
       </Card>
 
       <Card title={`時間割配置 (timetableSlots) — ${slots.length}件`}>
-        {slots.length === 0 && <p className="text-neutral-500">未配置</p>}
+        {slots.length === 0 && <p className="text-hud-dim">未配置</p>}
         <ul className="text-xs">
           {slots.map((slot) => {
             const course = courses.find((c) => c.id === slot.courseId)
@@ -281,7 +281,7 @@ export default function DevDataPanel() {
         <ul className="mt-2 text-xs">
           {schedules.map((s) => (
             <li key={s.id} className="flex items-center justify-between py-0.5">
-              <span className={s.done ? 'text-neutral-400 line-through' : ''}>
+              <span className={s.done ? 'text-hud-faint line-through' : ''}>
                 [{s.category}] {s.title} — {s.dueAt}
               </span>
               <span className="flex gap-1">
@@ -305,7 +305,7 @@ export default function DevDataPanel() {
           </Button>
         </div>
         {dump && (
-          <pre className="mt-2 max-h-64 overflow-auto rounded bg-neutral-900 p-2 text-[10px] leading-tight text-neutral-100">
+          <pre className="mt-2 max-h-64 overflow-auto rounded bg-void p-2 text-[10px] leading-tight text-hud">
             {JSON.stringify(dump, null, 2)}
           </pre>
         )}
@@ -317,8 +317,8 @@ export default function DevDataPanel() {
 
 function Card({ title, children }) {
   return (
-    <section className="mb-3 rounded-xl bg-white p-3 shadow-sm">
-      <h2 className="mb-2 text-xs font-bold text-neutral-500">{title}</h2>
+    <section className="mb-3 rounded-panel border border-line bg-panel/80 p-3">
+      <h2 className="mb-2 text-xs font-bold text-hud-dim">{title}</h2>
       {children}
     </section>
   )
@@ -329,8 +329,8 @@ function Button({ children, onClick, danger = false }) {
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-3 py-1 text-xs font-medium ${
-        danger ? 'bg-red-100 text-red-700' : 'bg-neutral-200 text-neutral-700'
+      className={`font-hud rounded-sharp px-3 py-1 text-xs font-semibold ${
+        danger ? 'border border-alert/60 bg-alert/10 text-alert' : 'border border-line bg-panel-2 text-hud-dim'
       }`}
     >
       {children}

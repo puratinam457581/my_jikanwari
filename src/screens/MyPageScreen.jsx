@@ -18,24 +18,39 @@ export default function MyPageScreen() {
     <ScreenLayout title="マイページ">
       <div className="p-3">
         <Card title="単位取得状況">
-          <div className="mb-2 flex items-end justify-between">
-            <span className="text-2xl font-bold text-neutral-800">
+          <div className="mb-3 flex items-end justify-between">
+            <span className="font-digit text-3xl font-bold text-hud">
               {earned}
-              <span className="ml-1 text-sm font-normal text-neutral-500">
-                / {required} 単位
+              <span className="ml-1.5 text-sm font-normal text-hud-dim">
+                / {required}
               </span>
+              <span className="font-hud ml-1 text-xs text-hud-faint">単位</span>
             </span>
-            <span className="text-sm font-bold text-sky-600">{ratio}%</span>
+            <span
+              className="font-digit text-glow text-xl font-bold text-cyan"
+              style={{ '--glow-color': 'var(--color-cyan)' }}
+            >
+              {ratio}%
+            </span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-100">
+
+          {/* 進捗バー。計器のゲージらしく目盛りを刻む */}
+          <div className="relative h-2.5 w-full overflow-hidden rounded-sharp border border-line bg-void">
             <div
-              className="h-full rounded-full bg-sky-500"
-              style={{ width: `${ratio}%` }}
+              className="glow-sm h-full bg-cyan"
+              style={{ width: `${ratio}%`, '--glow-color': 'var(--color-cyan)' }}
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0"
+              style={{
+                backgroundImage:
+                  'repeating-linear-gradient(90deg, transparent 0 9px, rgba(7,11,20,0.85) 9px 10px)',
+              }}
             />
           </div>
-          <p className="mt-2 text-[11px] text-neutral-400">
-            フェーズ2: 数値はダミーです
-          </p>
+
+          <p className="mt-2 text-[11px] text-hud-faint">フェーズ2: 数値はダミーです</p>
         </Card>
 
         <Card title="設定">
@@ -45,7 +60,11 @@ export default function MyPageScreen() {
         </Card>
 
         <Card title="データ">
-          <LinkRow label="バックアップ(エクスポート/インポート)" value="フェーズ10" onClick={() => {}} />
+          <LinkRow
+            label="バックアップ(エクスポート/インポート)"
+            value="フェーズ10"
+            onClick={() => {}}
+          />
           <LinkRow label="時間割を画像で保存" value="フェーズ10" onClick={() => {}} />
         </Card>
 

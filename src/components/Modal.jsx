@@ -14,22 +14,27 @@ export default function Modal({ title, children, footer = null }) {
         type="button"
         aria-label="閉じる"
         onClick={closeModal}
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-void/75 backdrop-blur-[2px]"
       />
 
       <div
-        className="relative max-h-[85%] overflow-y-auto rounded-t-3xl bg-white"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="relative max-h-[85%] overflow-y-auto border-t border-cyan/40 bg-deep"
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          boxShadow: '0 -12px 40px -12px rgba(0, 240, 255, 0.35)',
+        }}
       >
-        <div className="sticky top-0 flex items-center justify-between border-b border-neutral-100 bg-white px-4 py-3">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-deep px-4 py-3">
           <button
             type="button"
             onClick={closeModal}
-            className="text-sm text-neutral-500 active:opacity-60"
+            className="font-hud text-sm text-hud-dim active:opacity-60"
           >
             キャンセル
           </button>
-          <h2 className="text-sm font-bold text-neutral-800">{title}</h2>
+          <h2 className="font-hud text-sm font-semibold tracking-wide text-hud">
+            {title}
+          </h2>
           <div className="min-w-[4.5rem] text-right">{footer}</div>
         </div>
         <div className="p-4">{children}</div>

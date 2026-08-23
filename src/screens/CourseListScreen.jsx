@@ -8,7 +8,7 @@ const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 /**
  * 講義リスト画面(spec 4.2)。
  * 並び順は「曜日・時限順」がデフォルト。
- * 項目タップで授業詳細へ遷移する(遷移先は詳細画面に統一)。
+ * 項目タップで授業詳細へ遷移する。
  */
 export default function CourseListScreen() {
   const { push } = useNavigation()
@@ -28,27 +28,30 @@ export default function CourseListScreen() {
               <button
                 type="button"
                 onClick={() => push('courseDetail', { courseId: course.id })}
-                className="flex w-full items-stretch gap-3 overflow-hidden rounded-2xl bg-white text-left shadow-sm active:bg-neutral-50"
+                className="flex w-full items-stretch gap-3 overflow-hidden rounded-panel border border-line bg-panel/80 text-left active:bg-panel-2"
               >
-                {/* 講義カラーの帯 */}
+                {/* 講義カラーの帯。発光させて識別子にする */}
                 <span
-                  className="w-1.5 shrink-0"
-                  style={{ backgroundColor: course.color }}
+                  className="w-1 shrink-0"
+                  style={{
+                    backgroundColor: course.color,
+                    boxShadow: `0 0 10px 0 ${course.color}`,
+                  }}
                 />
                 <span className="min-w-0 flex-1 py-3 pr-3">
-                  <span className="block truncate text-sm font-bold text-neutral-800">
+                  <span className="block truncate text-sm font-semibold text-hud">
                     {course.name}
                   </span>
-                  <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-neutral-500">
-                    <span className="font-medium text-neutral-600">
-                      {DAY_LABELS[course.day]}曜 {course.period}限
+                  <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-hud-dim">
+                    <span className="font-digit rounded-sharp border border-line bg-panel-2 px-1.5 py-0.5 text-cyan">
+                      {DAY_LABELS[course.day]} {course.period}
                     </span>
-                    <span className="flex items-center gap-0.5">
-                      <TeacherIcon width={12} height={12} />
+                    <span className="flex items-center gap-1">
+                      <TeacherIcon size={12} strokeWidth={1.5} />
                       {course.teacher || '未登録'}
                     </span>
-                    <span className="flex items-center gap-0.5">
-                      <RoomIcon width={12} height={12} />
+                    <span className="flex items-center gap-1">
+                      <RoomIcon size={12} strokeWidth={1.5} />
                       {course.room || '未登録'}
                     </span>
                   </span>
@@ -58,7 +61,7 @@ export default function CourseListScreen() {
           ))}
         </ul>
 
-        <p className="mt-3 px-2 text-center text-[11px] text-neutral-400">
+        <p className="mt-3 px-2 text-center text-[11px] text-hud-faint">
           フェーズ2: 表示中の講義はダミーです
         </p>
       </div>
