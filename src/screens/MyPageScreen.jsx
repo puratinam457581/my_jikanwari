@@ -1,5 +1,7 @@
 import ScreenLayout, { Card, LinkRow } from '../components/ScreenLayout.jsx'
+import { MoonIcon, SunIcon } from '../components/icons.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
+import { THEMES, useTheme } from '../theme/ThemeProvider.jsx'
 
 /**
  * マイページ(spec 3章 / 4.11)。
@@ -45,12 +47,16 @@ export default function MyPageScreen() {
               className="pointer-events-none absolute inset-0"
               style={{
                 backgroundImage:
-                  'repeating-linear-gradient(90deg, transparent 0 9px, rgba(7,11,20,0.85) 9px 10px)',
+                  'repeating-linear-gradient(90deg, transparent 0 9px, var(--color-void) 9px 10px)',
               }}
             />
           </div>
 
           <p className="mt-2 text-[11px] text-hud-faint">フェーズ2: 数値はダミーです</p>
+        </Card>
+
+        <Card title="表示テーマ">
+          <ThemeSwitch />
         </Card>
 
         <Card title="設定">
@@ -73,5 +79,42 @@ export default function MyPageScreen() {
         </Card>
       </div>
     </ScreenLayout>
+  )
+}
+
+/**
+ * ダーク/ライトの切り替え(デザイン仕様6.5)。
+ * 選択はIndexedDBに保存され、次回起動時も保たれる。
+ */
+function ThemeSwitch() {
+  const { theme, setTheme } = useTheme()
+
+  const options = [
+    { value: THEMES.dark, label: 'ダーク', Icon: MoonIcon },
+    { value: THEMES.light, label: 'ライト', Icon: SunIcon },
+  ]
+
+  return (
+    <div className="flex gap-2">
+      {options.map(({ value, label, Icon }) => {
+        const active = theme === value
+        return (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setTheme(value)}
+            aria-pressed={active}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-sharp border py-2.5 text-sm font-semibold transition-colors ${
+              active
+                ? 'glow-sm border-cyan bg-cyan/10 text-cyan'
+                : 'border-line bg-panel-2 text-hud-dim'
+            }`}
+          >
+            <Icon size={16} strokeWidth={1.5} />
+            <span className="font-hud">{label}</span>
+          </button>
+        )
+      })}
+    </div>
   )
 }

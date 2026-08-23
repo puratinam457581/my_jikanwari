@@ -39,6 +39,7 @@
 | 永続化 | IndexedDB(ラッパーに `idb`) |
 | バックアップ | JSON エクスポート/インポートを自前実装 |
 | アイコン | lucide-react(ISC) |
+| テーマ | ダーク/ライトの2構成。CSS変数を `<html data-theme>` で切替 |
 | フォント | Rajdhani / Share Tech Mono(SIL OFL、public/fonts に同梱) |
 | 通知 | Service Worker + Notification API(ローカル通知ベース) |
 | ホスティング | GitHub Pages または Cloudflare Pages(無料枠) |
@@ -84,7 +85,7 @@ npm run preview   # ビルド結果のローカル確認(PWA動作確認はこ�
 - [x] フェーズ0: プロジェクト初期化(Vite 8 + React 19 + Tailwind CSS 4)
 - [x] フェーズ1: データ層構築(IndexedDB / idb)
 - [x] フェーズ2: 画面遷移の骨組み(自前ナビゲーション)
-- [x] UIデザイン適用(ui-design-spec.md / SF・HUD調のダークテーマ)
+- [x] UIデザイン適用(ui-design-spec.md / ダーク=SF調・ライト=白基調の2テーマ + 切替)
 - [ ] フェーズ3: 講義リスト・講義編集フォーム
 - [ ] フェーズ4〜11: 未着手
 

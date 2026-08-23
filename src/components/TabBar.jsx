@@ -18,14 +18,10 @@ export default function TabBar() {
       // iPhoneのホームバーと重ならないよう、下端に安全余白を足す
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      {/* タブバー上端の発光ライン */}
+      {/* タブバー上端の発光ライン(ダークのみ。ライトでは消える) */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px"
-        style={{
-          background:
-            'linear-gradient(90deg, transparent, rgba(0,240,255,0.45), transparent)',
-        }}
+        className="edge-line pointer-events-none absolute inset-x-0 top-0 h-px"
       />
 
       <ul className="flex">

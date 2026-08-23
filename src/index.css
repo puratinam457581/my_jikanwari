@@ -4,8 +4,9 @@
    フォント(同梱)
    外部サーバーから読まず、public/fonts/ のファイルを使う。
    → オフラインでも確実に表示される(CLAUDE.md 絶対制約4)
-   いずれも latin(英数字)のみを収録しているため、
-   日本語は下の font-family 指定で自動的にシステムフォントへ回る。
+   latin(英数字)のみを収録しているため、日本語は自動的に
+   フォールバック先のシステムフォントで表示される。
+   ライトモードでは装飾フォントを使わない(デザイン仕様6.4)。
    ============================================================ */
 
 @font-face {
@@ -38,50 +39,146 @@
 }
 
 /* ============================================================
-   テーマ定義
-   色はすべてここで名前を付け、画面側では bg-panel / text-hud のように
-   意味のある名前で使う。後から色味を変えたくなったらここだけ直せばよい。
+   テーマの仕組み
+   ------------------------------------------------------------
+   色・角丸・フォント・装飾効果をすべて「変数」にしてある。
+   <html data-theme="light"> が付くと下の上書きブロックが効き、
+   画面側のコードを一切変えずに見た目だけが切り替わる。
+
+   ここが既定値(= ダークモード / デザイン仕様1〜5章)。
    ============================================================ */
 
 @theme {
-  /* --- 背景の階層(奥 → 手前) --- */
-  --color-void: #070b14; /* 最背面。ほぼ黒の濃紺 */
-  --color-deep: #0a0e1a; /* アプリの基本背景 */
+  /* --- 背景の階層 --- */
+  --color-void: #070b14; /* 最背面・ヘッダー・タブバーの面 */
+  --color-deep: #0a0e1a; /* コンテンツ領域の背景 */
   --color-panel: #111827; /* カード・パネル */
-  --color-panel-2: #1a1f2e; /* パネル上の一段明るい面(入力欄など) */
+  --color-panel-2: #1a1f2e; /* パネル上の一段違う面(入力欄など) */
 
   /* --- 罫線 --- */
-  --color-line: #1f2937; /* 通常の区切り線 */
-  --color-line-glow: rgba(0, 240, 255, 0.22); /* 発光する細い線 */
+  --color-line: #1f2937;
+  --color-line-glow: rgba(0, 240, 255, 0.22);
 
   /* --- 文字 --- */
-  --color-hud: #e5e7eb; /* 本文。白に近いグレー */
+  --color-hud: #e5e7eb; /* 本文 */
   --color-hud-dim: #94a3b8; /* 補助情報 */
   --color-hud-faint: #64748b; /* さらに弱い情報・プレースホルダー */
 
-  /* --- アクセント(ネオン) --- */
-  --color-cyan: #00f0ff; /* 主要アクセント・選択中・発光線 */
-  --color-electric: #2d5fff; /* ボタン・リンク・アクティブなタブ */
+  /* --- アクセント --- */
+  --color-cyan: #00f0ff; /* 主要アクセント・選択中 */
+  --color-electric: #2d5fff; /* ボタン・リンク */
   --color-purple: #b24bff; /* サブアクセント */
   --color-alert: #ff3b5c; /* 警告専用(欠席上限到達など) */
 
   /* --- フォント --- */
-  /* 見出し・ラベル用。英数字は Rajdhani、日本語はシステムフォントへ回る */
   --font-hud:
     'Rajdhani', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP',
     'Yu Gothic', sans-serif;
-  /* 数値表示用(計器盤風の等幅) */
   --font-digit:
     'Share Tech Mono', ui-monospace, 'SFMono-Regular', 'Hiragino Sans', 'Noto Sans JP',
     monospace;
-  /* 本文・長文用。可読性を優先し装飾フォントは使わない */
   --font-body:
     -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic',
     sans-serif;
 
-  /* --- 角丸。シャープさを優先し最小限に(デザイン仕様3.1) --- */
+  /* --- 角丸。ダークはシャープに(デザイン仕様3.1) --- */
   --radius-sharp: 2px;
   --radius-panel: 4px;
+}
+
+:root {
+  /* --- 装飾効果。ライトモードでは影に置き換わる --- */
+  --fx-glow-sm: 0 0 6px -1px var(--glow-color, var(--color-cyan));
+  --fx-glow:
+    0 0 10px -2px var(--glow-color, var(--color-cyan)),
+    inset 0 0 12px -8px var(--glow-color, var(--color-cyan));
+  --fx-glow-lg:
+    0 0 18px -3px var(--glow-color, var(--color-cyan)),
+    inset 0 0 16px -8px var(--glow-color, var(--color-cyan));
+  --fx-text-glow: 0 0 12px var(--glow-color, var(--color-cyan));
+
+  /* ヘッダー下端・タブバー上端の、両端が消える発光ライン */
+  --fx-edge-line: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 240, 255, 0.5),
+    transparent
+  );
+
+  /* 背景の薄いグリッド(デザイン仕様3.4)。画像を使わないので軽い */
+  --fx-bg-grid:
+    linear-gradient(rgba(0, 240, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.028) 1px, transparent 1px);
+  --fx-bg-grid-size: 28px 28px;
+
+  /* モーダルの背後を覆う膜。両テーマとも暗くする必要がある */
+  --fx-scrim: rgba(7, 11, 20, 0.75);
+
+  /* PC表示時、中央のアプリ枠を縁取る効果 */
+  --fx-frame: 0 0 60px -20px var(--color-cyan);
+
+  /* 追加ボタン(FAB)の丸み。ライトは真円にする */
+  --radius-fab: 4px;
+
+  /* 時間割のコマ。テーマごとに見せ方が根本的に違うのでここで切り替える */
+  --tt-cell-bg: var(--color-panel);
+  --tt-cell-border: var(--course-color, var(--color-line));
+  --tt-cell-shadow:
+    0 0 8px -2px var(--course-color, transparent),
+    inset 0 0 12px -8px var(--course-color, transparent);
+  --tt-cell-text: var(--color-hud);
+  --tt-empty-bg: color-mix(in srgb, var(--color-panel) 40%, transparent);
+}
+
+/* ============================================================
+   ライトモード(デザイン仕様6章)
+   単なる色反転ではなく、白基調・角丸大きめ・発光なしの
+   独立した世界観として定義する。
+   ============================================================ */
+
+:root[data-theme='light'] {
+  --color-void: #ffffff; /* ヘッダー・タブバーは白 */
+  --color-deep: #e8f0fa; /* コンテンツ背景は淡い水色 */
+  --color-panel: #ffffff; /* カードは白 */
+  --color-panel-2: #f1f5f9;
+
+  --color-line: #e2e8f0;
+  --color-line-glow: rgba(148, 163, 184, 0.35);
+
+  --color-hud: #1e293b;
+  --color-hud-dim: #64748b;
+  --color-hud-faint: #94a3b8;
+
+  --color-cyan: #3b82f6; /* ダークのシアンと同じ役割を、標準的な青が担う */
+  --color-electric: #2563eb;
+  --color-purple: #8b5cf6;
+  --color-alert: #ef4444;
+
+  /* 装飾フォントは使わず、読みやすい書体で統一する */
+  --font-hud: var(--font-body);
+  --font-digit: var(--font-body);
+
+  /* 角丸は大きめ、柔らかい印象に */
+  --radius-sharp: 8px;
+  --radius-panel: 14px;
+  --radius-fab: 9999px;
+
+  /* 発光をやめ、薄い影に置き換える */
+  --fx-glow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --fx-glow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --fx-glow-lg: 0 6px 16px -4px rgba(15, 23, 42, 0.14);
+  --fx-text-glow: none;
+  --fx-edge-line: none;
+  --fx-bg-grid: none;
+  --fx-scrim: rgba(15, 23, 42, 0.4);
+  --fx-frame: 0 0 40px -18px rgba(15, 23, 42, 0.35);
+
+  /* コマは講義カラーを淡く敷く(デザイン仕様6.2 / 参照スクリーンショット) */
+  --tt-cell-bg: color-mix(in srgb, var(--course-color, #fff) 40%, #ffffff);
+  --tt-cell-border: transparent;
+  --tt-cell-shadow: none;
+  --tt-cell-text: #1e293b;
+  --tt-empty-bg: #ffffff;
 }
 
 @layer base {
@@ -94,18 +191,14 @@
   body {
     font-family: var(--font-body);
     color: var(--color-hud);
-    background-color: var(--color-deep);
+    background-color: var(--color-void);
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: none;
     /* スクロールは画面内の本文エリアだけに任せ、ページ全体は動かさない */
     overflow: hidden;
 
-    /* 背景の薄いグリッド(デザイン仕様3.4)。
-       画像を使わずCSSのグラデーションだけで描くので描画負荷はほぼゼロ */
-    background-image:
-      linear-gradient(rgba(0, 240, 255, 0.028) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 240, 255, 0.028) 1px, transparent 1px);
-    background-size: 28px 28px;
+    background-image: var(--fx-bg-grid);
+    background-size: var(--fx-bg-grid-size);
     background-attachment: fixed;
   }
 
@@ -113,7 +206,6 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* 入力欄の見た目をiOS標準から切り離す */
   input,
   select,
   textarea {
@@ -128,8 +220,117 @@
   }
 }
 
+@layer components {
+  /* --------------------------------------------------------
+     アプリ枠。
+     スマホでは画面いっぱい、PCなど横に広い画面では中央に
+     スマホ幅で固定する(横に間延びさせない)。
+     -------------------------------------------------------- */
+  .app-viewport {
+    display: flex;
+    justify-content: center;
+    height: 100%;
+  }
+
+  .app-frame {
+    position: relative;
+    width: 100%;
+    max-width: 28rem;
+    height: 100%;
+    background-color: var(--color-deep);
+  }
+
+  @media (min-width: 30rem) {
+    .app-frame {
+      border-left: 1px solid var(--color-line);
+      border-right: 1px solid var(--color-line);
+      box-shadow: var(--fx-frame);
+    }
+  }
+
+  /* --------------------------------------------------------
+     時間割のコマ
+     ダーク: 枠線を講義カラーで発光させ、文字は白
+     ライト: 講義カラーを淡く敷き、文字は濃色
+     -------------------------------------------------------- */
+  .tt-cell {
+    background-color: var(--tt-cell-bg);
+    border: 1px solid var(--tt-cell-border);
+    box-shadow: var(--tt-cell-shadow);
+    color: var(--tt-cell-text);
+  }
+
+  .tt-empty {
+    background-color: var(--tt-empty-bg);
+    border: 1px solid var(--color-line);
+  }
+
+  /* --------------------------------------------------------
+     ボタン
+     -------------------------------------------------------- */
+  .btn {
+    font-family: var(--font-hud);
+    letter-spacing: 0.02em;
+    font-weight: 600;
+    border-radius: var(--radius-sharp);
+    border: 1px solid transparent;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+  }
+  .btn:active {
+    opacity: 0.7;
+  }
+  .btn:disabled {
+    opacity: 0.4;
+  }
+
+  .btn-primary {
+    border-color: color-mix(in srgb, var(--color-electric) 80%, transparent);
+    background-color: color-mix(in srgb, var(--color-electric) 15%, transparent);
+    color: var(--color-hud);
+    box-shadow: var(--fx-glow-sm);
+    --glow-color: var(--color-electric);
+  }
+  :root[data-theme='light'] .btn-primary {
+    /* ライトでは塗りつぶしの青ボタンにする */
+    border-color: var(--color-electric);
+    background-color: var(--color-electric);
+    color: #ffffff;
+  }
+
+  .btn-ghost {
+    border-color: var(--color-line);
+    background-color: var(--color-panel-2);
+    color: var(--color-hud-dim);
+  }
+
+  .btn-danger {
+    border-color: color-mix(in srgb, var(--color-alert) 70%, transparent);
+    background-color: color-mix(in srgb, var(--color-alert) 10%, transparent);
+    color: var(--color-alert);
+  }
+
+  /* --------------------------------------------------------
+     追加ボタン(FAB)
+     -------------------------------------------------------- */
+  .fab {
+    border-radius: var(--radius-fab);
+    border: 1px solid color-mix(in srgb, var(--color-cyan) 70%, transparent);
+    background-color: var(--color-panel);
+    color: var(--color-cyan);
+    box-shadow: var(--fx-glow);
+  }
+  :root[data-theme='light'] .fab {
+    border-color: transparent;
+    background-color: var(--color-electric);
+    color: #ffffff;
+    box-shadow: 0 6px 16px -4px rgba(37, 99, 235, 0.5);
+  }
+}
+
 @layer utilities {
-  /* 見出し・ラベル用の書体。英字は少し字間を空けると計器盤らしくなる */
+  /* 見出し・ラベル用の書体 */
   .font-hud {
     font-family: var(--font-hud);
     letter-spacing: 0.02em;
@@ -141,23 +342,29 @@
     letter-spacing: 0.04em;
   }
 
-  /* 枠線を発光させる(デザイン仕様3.2)。強さは3段階 */
+  /* 発光(ライトモードでは薄い影に置き換わる) */
   .glow-sm {
-    box-shadow: 0 0 6px -1px var(--glow-color, var(--color-cyan));
+    box-shadow: var(--fx-glow-sm);
   }
   .glow {
-    box-shadow:
-      0 0 10px -2px var(--glow-color, var(--color-cyan)),
-      inset 0 0 12px -8px var(--glow-color, var(--color-cyan));
+    box-shadow: var(--fx-glow);
   }
   .glow-lg {
-    box-shadow:
-      0 0 18px -3px var(--glow-color, var(--color-cyan)),
-      inset 0 0 16px -8px var(--glow-color, var(--color-cyan));
+    box-shadow: var(--fx-glow-lg);
   }
 
-  /* 文字自体をほのかに光らせる。大きい文字にだけ使う(小さい文字は読みにくくなる) */
+  /* 文字自体をほのかに光らせる。大きい文字にだけ使う */
   .text-glow {
-    text-shadow: 0 0 12px var(--glow-color, var(--color-cyan));
+    text-shadow: var(--fx-text-glow);
+  }
+
+  /* ヘッダー下端・タブバー上端の発光ライン */
+  .edge-line {
+    background: var(--fx-edge-line);
+  }
+
+  /* モーダルの背後を覆う膜 */
+  .scrim {
+    background-color: var(--fx-scrim);
   }
 }

@@ -49,14 +49,10 @@ export default function ScreenLayout({
         </div>
         {headerExtra}
 
-        {/* ヘッダー下端の発光ライン。計器パネルの縁のような表現 */}
+        {/* ヘッダー下端の発光ライン(ダークのみ。ライトでは消える) */}
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
-          style={{
-            background:
-              'linear-gradient(90deg, transparent, rgba(0,240,255,0.55), transparent)',
-          }}
+          className="edge-line pointer-events-none absolute inset-x-0 bottom-0 h-px"
         />
       </header>
 
@@ -113,7 +109,7 @@ export function FloatingActionButton({ onClick, label = '追加' }) {
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="glow fixed right-5 z-20 flex h-13 w-13 items-center justify-center rounded-panel border border-cyan/70 bg-panel text-cyan active:bg-panel-2"
+      className="fab absolute right-5 z-20 flex items-center justify-center active:opacity-80"
       style={{
         bottom: 'calc(env(safe-area-inset-bottom) + 5rem)',
         height: '3.25rem',
@@ -137,18 +133,13 @@ export function Button({
   disabled = false,
   className = '',
 }) {
-  const styles = {
-    primary:
-      'border-electric/80 bg-electric/15 text-hud glow-sm [--glow-color:var(--color-electric)]',
-    ghost: 'border-line bg-panel-2 text-hud-dim',
-    danger: 'border-alert/70 bg-alert/10 text-alert',
-  }
+  // 実際の色は index.css の .btn-* が持つ(テーマごとに見え方が変わるため)
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`font-hud rounded-sharp border px-3 py-1.5 text-xs font-semibold tracking-wide transition-opacity active:opacity-70 disabled:opacity-40 ${styles[variant]} ${className}`}
+      className={`btn btn-${variant} transition-opacity ${className}`}
     >
       {children}
     </button>

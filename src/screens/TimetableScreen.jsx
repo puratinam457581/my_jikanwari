@@ -96,14 +96,12 @@ export default function TimetableScreen() {
                         <button
                           type="button"
                           onClick={() => push('courseDetail', { courseId: course.id })}
-                          className="flex h-full w-full flex-col items-center justify-between rounded-sharp border bg-panel p-1 text-center active:opacity-70"
-                          style={{
-                            borderColor: course.color,
-                            // 講義カラーは「枠線の発光」で表現し、文字は白のまま保つ
-                            boxShadow: `0 0 8px -2px ${course.color}, inset 0 0 12px -8px ${course.color}`,
-                          }}
+                          // 見た目はテーマごとに index.css の .tt-cell が決める
+                          // (ダーク: 枠線を発光 / ライト: 講義カラーを淡く敷く)
+                          className="tt-cell flex h-full w-full flex-col items-center justify-between rounded-sharp p-1 text-center active:opacity-70"
+                          style={{ '--course-color': course.color }}
                         >
-                          <span className="line-clamp-3 break-all text-[10px] leading-tight font-semibold text-hud">
+                          <span className="line-clamp-3 break-all text-[10px] leading-tight font-semibold">
                             {course.name}
                           </span>
                           <span className="font-digit w-full truncate rounded-sharp bg-panel-2 px-1 py-0.5 text-[9px] text-hud-dim">
@@ -116,8 +114,8 @@ export default function TimetableScreen() {
                           onClick={() =>
                             openModal('coursePicker', { day: day.value, period: p.period })
                           }
-                          className={`h-full w-full rounded-sharp border border-line active:bg-panel-2 ${
-                            isToday ? 'bg-cyan/[0.04]' : 'bg-panel/40'
+                          className={`tt-empty h-full w-full rounded-sharp active:opacity-70 ${
+                            isToday ? 'ring-1 ring-cyan/25' : ''
                           }`}
                           aria-label={`${day.label}曜${p.period}限 空きコマ`}
                         />

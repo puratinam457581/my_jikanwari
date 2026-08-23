@@ -1,17 +1,20 @@
 import TabBar from './components/TabBar.jsx'
 import { NavigationProvider, useNavigation } from './navigation/NavigationContext.jsx'
+import { ThemeProvider } from './theme/ThemeProvider.jsx'
 import { MODAL_SCREENS, STACK_SCREENS, TAB_SCREENS } from './screens/index.js'
 
 /**
  * アプリのルート。
- * 画面遷移の状態を NavigationProvider が持ち、AppShell がそれを見て
- * 「今どの画面を描くか」を決める。
+ * 画面遷移の状態を NavigationProvider が、表示テーマを ThemeProvider が持ち、
+ * AppShell がそれを見て「今どの画面を描くか」を決める。
  */
 export default function App() {
   return (
-    <NavigationProvider>
-      <AppShell />
-    </NavigationProvider>
+    <ThemeProvider>
+      <NavigationProvider>
+        <AppShell />
+      </NavigationProvider>
+    </ThemeProvider>
   )
 }
 
@@ -27,19 +30,23 @@ function AppShell() {
   const hideTabBar = stackEntry?.hideTabBar === true
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="min-h-0 flex-1">
-        {StackScreen ? (
-          // key を渡すことで、別の画面に移ったとき状態がリセットされる
-          <StackScreen key={current.key} {...current.params} />
-        ) : (
-          <TabScreen />
-        )}
+    // app-viewport / app-frame は、PCなど横に広い画面でも
+    // スマホ幅を保って中央に表示するための枠(index.css)
+    <div className="app-viewport">
+      <div className="app-frame flex flex-col">
+        <div className="min-h-0 flex-1">
+          {StackScreen ? (
+            // key を渡すことで、別の画面に移ったとき状態がリセットされる
+            <StackScreen key={current.key} {...current.params} />
+          ) : (
+            <TabScreen />
+          )}
+        </div>
+
+        {!hideTabBar && <TabBar />}
+
+        {ModalScreen && <ModalScreen {...modal.params} />}
       </div>
-
-      {!hideTabBar && <TabBar />}
-
-      {ModalScreen && <ModalScreen {...modal.params} />}
     </div>
   )
 }

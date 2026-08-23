@@ -112,6 +112,7 @@ async function seedDefaults(db) {
       key: DISPLAY_SETTINGS_KEY,
       visibleDays: [...DEFAULT_VISIBLE_DAYS],
       requiredCredits: null,
+      theme: 'dark', // 表示テーマ(デザイン仕様6.5)
     })
   }
 

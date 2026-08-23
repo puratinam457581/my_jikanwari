@@ -13,6 +13,22 @@
     <title>時間割管理アプリ</title>
   </head>
   <body>
+    <script>
+      // React が動き出す前にテーマを確定させ、画面のちらつきを防ぐ。
+      // 保存できていない/読めない場合はダークにする。
+      (function () {
+        try {
+          var t = localStorage.getItem('jikanwari-theme')
+          document.documentElement.dataset.theme = t === 'light' ? 'light' : 'dark'
+          if (t === 'light') {
+            var m = document.querySelector('meta[name="theme-color"]')
+            if (m) m.setAttribute('content', '#ffffff')
+          }
+        } catch (e) {
+          document.documentElement.dataset.theme = 'dark'
+        }
+      })()
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -83,13 +83,14 @@ export function findCurrentPeriod(periodSettings, now = new Date()) {
 export async function getDisplaySettings() {
   const db = await getDB()
   const settings = await db.get(STORES.displaySettings, DISPLAY_SETTINGS_KEY)
-  return (
-    settings ?? {
-      key: DISPLAY_SETTINGS_KEY,
-      visibleDays: [...DEFAULT_VISIBLE_DAYS],
-      requiredCredits: null,
-    }
-  )
+  // 既存データに項目が無い場合(アプリ更新後など)も既定値で埋める
+  return {
+    key: DISPLAY_SETTINGS_KEY,
+    visibleDays: [...DEFAULT_VISIBLE_DAYS],
+    requiredCredits: null,
+    theme: 'dark', // 表示テーマ(デザイン仕様6.5)
+    ...settings,
+  }
 }
 
 export async function updateDisplaySettings(patch) {
