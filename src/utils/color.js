@@ -69,3 +69,19 @@ export function normalizeHex(hex, fallback = '#38BDF8') {
   const to2 = (n) => n.toString(16).padStart(2, '0')
   return `#${to2(rgb.r)}${to2(rgb.g)}${to2(rgb.b)}`
 }
+
+/**
+ * 2色を混ぜる。ratio は base をどれだけ残すか(0〜1)。
+ * 例: mixHex('#38BDF8', '#ffffff', 0.45) → 45%の水色を白で薄めた色
+ *
+ * CSS の color-mix() と同じことを JavaScript で行うためのもの。
+ * canvas には color-mix() が使えないため、画像の書き出しで必要になる。
+ */
+export function mixHex(base, other, ratio) {
+  const a = hexToRgb(base)
+  const b = hexToRgb(other)
+  if (!a || !b) return base
+  const to2 = (n) => Math.round(n).toString(16).padStart(2, '0')
+  const blend = (x, y) => to2(x * ratio + y * (1 - ratio))
+  return `#${blend(a.r, b.r)}${blend(a.g, b.g)}${blend(a.b, b.b)}`
+}

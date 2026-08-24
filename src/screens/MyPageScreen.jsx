@@ -3,7 +3,7 @@ import ScreenLayout, { Card, EmptyState, LinkRow } from '../components/ScreenLay
 import { MoonIcon, SunIcon } from '../components/icons.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
 import { THEMES, useTheme } from '../theme/ThemeProvider.jsx'
-import { getCreditSummary, semesterApi } from '../db/index.js'
+import { getCreditSummary, semesterApi, settingsApi } from '../db/index.js'
 import { getPermission } from '../notify/deliver.js'
 import { ProgressBar } from './CreditSettingsScreen.jsx'
 
@@ -16,20 +16,39 @@ export default function MyPageScreen() {
   const [loading, setLoading] = useState(true)
   const [summary, setSummary] = useState(null)
   const [semester, setSemester] = useState(null)
+  const [lastBackupAt, setLastBackupAt] = useState(null)
 
   // 通知が使える状態かどうかを一目で分かるようにする
   const permission = getPermission()
   const notifyStatus = { granted: 'オン', denied: '拒否', default: '未設定' }[permission] ?? '非対応'
 
   const load = useCallback(async () => {
-    const [result, active] = await Promise.all([
+    const [result, active, display] = await Promise.all([
       getCreditSummary(),
       semesterApi.getActiveSemester(),
+      settingsApi.getDisplaySettings(),
     ])
     setSummary(result)
     setSemester(active)
+    setLastBackupAt(display.lastBackupAt ?? null)
     setLoading(false)
   }, [])
+
+  /**
+   * バックアップの状態。データが消えると復旧できないので、
+   * 一度も書き出していない場合と、しばらく空いた場合は目立たせる。
+   */
+  const backupDays = lastBackupAt
+    ? Math.floor((Date.now() - new Date(lastBackupAt).getTime()) / 86400000)
+    : null
+  const backupStatus =
+    backupDays === null ? (
+      <span className="text-alert">未実施</span>
+    ) : backupDays >= 30 ? (
+      <span className="text-alert">{backupDays}日前</span>
+    ) : (
+      `${backupDays}日前`
+    )
 
   useEffect(() => {
     load().catch((e) => {
@@ -103,10 +122,10 @@ export default function MyPageScreen() {
         <Card title="データ">
           <LinkRow
             label="バックアップ(エクスポート/インポート)"
-            value="フェーズ10"
-            onClick={() => {}}
+            value={backupStatus}
+            onClick={() => push('backup')}
           />
-          <LinkRow label="時間割を画像で保存" value="フェーズ10" onClick={() => {}} />
+          <LinkRow label="時間割を画像で保存" onClick={() => push('timetableImage')} />
         </Card>
 
         <Card title="開発用">

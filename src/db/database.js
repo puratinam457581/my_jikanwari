@@ -94,9 +94,10 @@ function createStores(db) {
 
 /**
  * 初回起動時のデフォルトデータを入れる。
+ * バックアップの取り込み後にも呼ばれる(設定が空のまま残らないように)。
  * 既にデータがある場合は何もしない(何度呼んでも安全)。
  */
-async function seedDefaults(db) {
+export async function seedDefaults(db) {
   // 時限設定: 6時限ぶんの初期時刻
   if ((await db.count(STORES.periodSettings)) === 0) {
     const tx = db.transaction(STORES.periodSettings, 'readwrite')

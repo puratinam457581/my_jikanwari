@@ -117,6 +117,8 @@ export async function getDisplaySettings() {
     // 時間割に表示する時限数。null は「保存されている時限設定の行数に従う」
     periodCount: null,
     theme: 'dark', // 表示テーマ(デザイン仕様6.5)
+    // 最後にバックアップを書き出した日時。未実施なら null(spec 8-4)
+    lastBackupAt: null,
     ...settings,
   }
 

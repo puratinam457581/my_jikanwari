@@ -4,7 +4,7 @@ import {
   PRESET_COLORS,
   attendanceApi,
   courseApi,
-  exportAll,
+  backupApi,
   resetDatabase,
   scheduleApi,
   semesterApi,
@@ -137,7 +137,7 @@ export default function DevDataPanel() {
       })
     })
 
-  const showDump = () => run(async () => setDump(await exportAll()))
+  const showDump = () => run(async () => setDump(await backupApi.exportAll()))
 
   const doReset = () =>
     run(async () => {
