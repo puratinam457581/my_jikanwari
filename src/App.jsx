@@ -1,9 +1,11 @@
+import { useSyncExternalStore } from 'react'
 import Sidebar from './components/Sidebar.jsx'
 import TabBar from './components/TabBar.jsx'
 import { NavigationProvider, useNavigation } from './navigation/NavigationContext.jsx'
 import { ThemeProvider } from './theme/ThemeProvider.jsx'
 import NotificationCenter from './notify/NotificationCenter.jsx'
 import PwaBanner from './pwa/PwaBanner.jsx'
+import { getState as getPwaState, subscribe as subscribePwa } from './pwa/updateBus.js'
 import { MODAL_SCREENS, STACK_SCREENS, TAB_SCREENS } from './screens/index.js'
 
 /**
@@ -23,6 +25,8 @@ export default function App() {
 
 function AppShell() {
   const { tab, current, modal } = useNavigation()
+  // 更新の帯が出ているかどうか。追加ボタン(+)の位置を逃がすのに使う
+  const { needRefresh, offlineReady } = useSyncExternalStore(subscribePwa, getPwaState, getPwaState)
 
   const TabScreen = TAB_SCREENS[tab]
   const stackEntry = current ? STACK_SCREENS[current.name] : null
@@ -38,7 +42,10 @@ function AppShell() {
     //   PC    : 左にサイドバー + 横幅いっぱいのコンテンツ
     <div className="app-viewport">
       <Sidebar />
-      <div className="app-frame relative flex flex-col">
+      <div
+        className="app-frame relative flex flex-col"
+        data-banner={needRefresh || offlineReady ? 'true' : undefined}
+      >
         <div className="min-h-0 flex-1">
           {StackScreen ? (
             // key を渡すことで、別の画面に移ったとき状態がリセットされる

@@ -494,6 +494,17 @@
     }
   }
 
+  /* アプリ更新の帯が出ているときは、追加ボタンをその上へ逃がす。
+     重なったままだと「更新する」も「+」も押しにくくなるため。 */
+  [data-banner='true'] .fab {
+    bottom: calc(env(safe-area-inset-bottom) + 8.5rem);
+  }
+  @media (min-width: 48rem) {
+    [data-banner='true'] .fab {
+      bottom: 5.5rem;
+    }
+  }
+
   :root[data-theme='light'] .fab {
     border-color: transparent;
     background-color: var(--color-electric);

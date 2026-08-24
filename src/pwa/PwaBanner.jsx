@@ -78,7 +78,7 @@ function Banner({ children }) {
   return (
     <div
       role="status"
-      className="shrink-0 border-t border-cyan/40 bg-panel px-3 py-2"
+      className="relative z-30 shrink-0 border-t border-cyan/40 bg-panel px-3 py-2"
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.5rem)' }}
     >
       <div className="flex items-center gap-2">{children}</div>

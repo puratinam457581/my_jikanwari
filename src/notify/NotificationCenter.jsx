@@ -68,7 +68,9 @@ export default function NotificationCenter() {
   return (
     <div
       className="pointer-events-none absolute inset-x-0 top-0 z-40 flex flex-col gap-2 p-3"
-      style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+      // ヘッダー(safe-area + 高さ3rem)の下に出す。
+      // 上端に重ねると、学期名や「学期切替」が隠れてしまうため。
+      style={{ paddingTop: 'calc(env(safe-area-inset-top) + 3.5rem)' }}
     >
       {toasts.map((notice) => (
         <div

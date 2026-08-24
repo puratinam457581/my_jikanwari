@@ -5,6 +5,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // 相対パスで出力する。こうしておくと、公開先が
+  //   https://例.github.io/jikannwari/  (GitHub Pages のサブパス)
+  //   https://例.pages.dev/             (Cloudflare Pages のルート)
+  // のどちらでも、設定を変えずにそのまま動く。
+  base: './',
   plugins: [
     react(),
     tailwindcss(),
