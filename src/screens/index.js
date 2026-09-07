@@ -10,6 +10,7 @@ import CreditSettingsScreen from './CreditSettingsScreen.jsx'
 import PeriodSettingsScreen from './PeriodSettingsScreen.jsx'
 import NotificationSettingsScreen from './NotificationSettingsScreen.jsx'
 import BackupScreen from './BackupScreen.jsx'
+import FirebaseAuthTestScreen from './FirebaseAuthTestScreen.jsx'
 import TimetableImageScreen from './TimetableImageScreen.jsx'
 import DevDataPanel from '../DevDataPanel.jsx'
 import {
@@ -40,6 +41,7 @@ export const STACK_SCREENS = {
   creditSettings: { component: CreditSettingsScreen },
   notificationSettings: { component: NotificationSettingsScreen },
   backup: { component: BackupScreen },
+  firebaseAuthTest: { component: FirebaseAuthTestScreen },
   timetableImage: { component: TimetableImageScreen },
   devData: { component: DevDataPanel },
 }

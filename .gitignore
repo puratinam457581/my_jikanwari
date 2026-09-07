@@ -7,6 +7,11 @@ dist-ssr
 dev-dist
 *.local
 
+# ローカル開発用の環境変数(Firebase設定値は秘密ではないが、
+# 開発中に値を都度書き換えられるよう個人の手元にだけ置く)
+.env
+.env.local
+
 # ログ
 logs
 *.log

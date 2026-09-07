@@ -130,6 +130,7 @@ export default function MyPageScreen() {
 
         <Card title="開発用">
           <LinkRow label="データ層の動作確認画面" onClick={() => push('devData')} />
+          <LinkRow label="Firebase連携(テスト)" onClick={() => push('firebaseAuthTest')} />
         </Card>
       </div>
     </ScreenLayout>
