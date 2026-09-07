@@ -1,0 +1,16 @@
+rules_version = '2';
+
+// 自分のuid配下だけ読み書きできる。他人のデータには一切アクセスできない。
+// このアプリはユーザー間でデータを共有しないため、これが最終形の想定。
+//
+// 【重要】この内容は Firebase コンソール(Firestore Database > ルール)にも
+// 手動で同じ内容を貼って「公開」する必要がある。このファイルは
+// ローカルのエミュレータ(テスト用)にのみ自動で反映され、
+// 本番のFirestoreには自動反映されない。
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

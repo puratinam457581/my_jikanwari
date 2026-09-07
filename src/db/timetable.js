@@ -1,11 +1,26 @@
-import { getDB } from './database.js'
+import { deleteDoc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
 import { STORES } from './constants.js'
-import { newId } from '../utils/id.js'
+import { userCollection, userDoc } from './firestoreBase.js'
+
+/**
+ * コマ配置のドキュメントIDを「学期・曜日・時限」から組み立てる。
+ *
+ * 【フェーズ13の工夫】IndexedDB版は「同じ学期・曜日・時限は1件だけ」という
+ * 制約をunique indexに任せていたが、Firestoreに同じ機能はない。
+ * 代わりに、この組み合わせをそのままドキュメントIDにしてしまえば、
+ * 「同じコマ = 同じドキュメント」になり、1コマ1講義(spec 4.7)が
+ * 自動的に保証される。読み書きも複雑な排他制御なしで書ける。
+ */
+export function slotId(semesterId, day, period) {
+  return `${semesterId}_${day}_${period}`
+}
 
 /** 指定学期の全コマ配置を返す */
 export async function listSlots(semesterId) {
-  const db = await getDB()
-  return db.getAllFromIndex(STORES.timetableSlots, 'by-semester', semesterId)
+  const snap = await getDocs(
+    query(userCollection(STORES.timetableSlots), where('semesterId', '==', semesterId)),
+  )
+  return snap.docs.map((d) => d.data())
 }
 
 /**
@@ -23,14 +38,14 @@ export async function getSlotMap(semesterId) {
 
 /** 全学期のコマ配置を返す。設定変更で隠れるデータを探すのに使う */
 export async function listAllSlots() {
-  const db = await getDB()
-  return db.getAll(STORES.timetableSlots)
+  const snap = await getDocs(userCollection(STORES.timetableSlots))
+  return snap.docs.map((d) => d.data())
 }
 
 /** 曜日・時限を指定して1コマぶんの配置を取得する */
 export async function getSlot(semesterId, day, period) {
-  const db = await getDB()
-  return db.getFromIndex(STORES.timetableSlots, 'by-slot', [semesterId, day, period])
+  const snap = await getDoc(userDoc(STORES.timetableSlots, slotId(semesterId, day, period)))
+  return snap.exists() ? snap.data() : undefined
 }
 
 /**
@@ -38,12 +53,9 @@ export async function getSlot(semesterId, day, period) {
  * 既に別の講義が入っている場合は上書きする。
  */
 export async function assignCourse(semesterId, day, period, courseId) {
-  const db = await getDB()
-  const existing = await getSlot(semesterId, day, period)
-  const slot = existing
-    ? { ...existing, courseId }
-    : { id: newId(), semesterId, day, period, courseId }
-  await db.put(STORES.timetableSlots, slot)
+  const id = slotId(semesterId, day, period)
+  const slot = { id, semesterId, day, period, courseId }
+  await setDoc(userDoc(STORES.timetableSlots, id), slot)
   return slot
 }
 
@@ -52,15 +64,15 @@ export async function assignCourse(semesterId, day, period, courseId) {
  * 配置だけを消し、講義マスタ自体は残す。
  */
 export async function clearSlot(semesterId, day, period) {
-  const db = await getDB()
-  const existing = await getSlot(semesterId, day, period)
-  if (existing) await db.delete(STORES.timetableSlots, existing.id)
+  await deleteDoc(userDoc(STORES.timetableSlots, slotId(semesterId, day, period)))
 }
 
 /** 講義IDから、その講義が配置されている全コマを返す */
 export async function listSlotsByCourse(courseId) {
-  const db = await getDB()
-  return db.getAllFromIndex(STORES.timetableSlots, 'by-course', courseId)
+  const snap = await getDocs(
+    query(userCollection(STORES.timetableSlots), where('courseId', '==', courseId)),
+  )
+  return snap.docs.map((d) => d.data())
 }
 
 /**

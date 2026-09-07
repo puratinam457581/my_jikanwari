@@ -27,8 +27,10 @@ export default function TimetableScreen() {
   const [slotMap, setSlotMap] = useState(new Map())
   const [alertCourseIds, setAlertCourseIds] = useState(new Set())
   const [now, setNow] = useState(() => new Date())
+  const [error, setError] = useState(null)
 
   const load = useCallback(async () => {
+    setError(null)
     const [activeSemester, periodSettings, display] = await Promise.all([
       semesterApi.getActiveSemester(),
       settingsApi.getPeriodSettings(),
@@ -65,7 +67,10 @@ export default function TimetableScreen() {
   }, [])
 
   useEffect(() => {
-    load().catch((e) => console.error(e))
+    load().catch((e) => {
+      console.error(e)
+      setError(e.message)
+    })
   }, [load])
 
   // 日付が変わる・時限が進むのに追従するため、1分ごとに現在時刻を更新する
@@ -98,6 +103,19 @@ export default function TimetableScreen() {
       }
     >
       <div className="p-2 md:p-5">
+        {error && (
+          <p className="mb-3 rounded-sharp border border-alert/60 bg-alert/10 p-2.5 text-xs text-alert">
+            読み込みに失敗しました: {error}
+            <button
+              type="button"
+              onClick={() => load().catch((e) => { console.error(e); setError(e.message) })}
+              className="ml-2 font-hud font-semibold underline underline-offset-2"
+            >
+              再読み込み
+            </button>
+          </p>
+        )}
+
         <table className="w-full table-fixed border-separate border-spacing-1">
           <thead>
             <tr>

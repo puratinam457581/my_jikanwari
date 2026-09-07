@@ -1,18 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { settingsApi } from '../db/index.js'
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 
 /**
  * 表示テーマ(ダーク/ライト)の管理(デザイン仕様6.5)。
  *
- * 【保存先が2か所ある理由】
- *  - IndexedDB : 正式な保存先(spec 7.7 display_settings と同じ扱い)
- *  - localStorage : 起動直後に即座に読める控え
- *
- * IndexedDBの読み出しは非同期なので、それを待ってから色を決めると
- * 一瞬だけ前のテーマが見えてしまう(画面のちらつき)。
- * そこで index.html の小さなスクリプトが localStorage を見て
- * 起動時点で <html data-theme> を確定させ、あとからIndexedDBの値で
- * 追いつく、という二段構えにしている。
+ * 【フェーズ13で方針変更】以前はIndexedDBにも保存し、起動時にそちらの値へ
+ * 「追いつく」二段構えにしていた。しかしFirestore移行後、データの読み書きには
+ * サインインが必須になった一方、ThemeProviderは(サインイン前の画面にも
+ * 色を付けたいので)AuthProviderより外側にいる。サインイン前に読み書きしようと
+ * するとエラーになるため、テーマは「その端末での見た目の好み」と割り切り、
+ * localStorageだけで完結させることにした。これによりPCとiPhoneで
+ * それぞれ別のテーマを選べる、という副次的な利点もある。
  */
 
 export const THEMES = {
@@ -58,27 +55,9 @@ function readStoredTheme() {
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(readStoredTheme)
 
-  // 起動時、IndexedDBに保存されている値で追いつく
-  useEffect(() => {
-    let cancelled = false
-    settingsApi.getDisplaySettings().then((settings) => {
-      if (cancelled) return
-      const saved = settings.theme ?? DEFAULT_THEME
-      setThemeState(saved)
-      applyTheme(saved)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
   const setTheme = useCallback((next) => {
     setThemeState(next)
     applyTheme(next)
-    // 保存の失敗で画面が戻ってしまわないよう、表示の切り替えとは切り離しておく
-    settingsApi.updateDisplaySettings({ theme: next }).catch((e) => {
-      console.error('テーマの保存に失敗しました', e)
-    })
   }, [])
 
   const toggleTheme = useCallback(() => {

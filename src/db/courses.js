@@ -1,11 +1,13 @@
-import { getDB } from './database.js'
+import { getDoc, getDocs, query, setDoc, where, writeBatch } from 'firebase/firestore'
+import { db } from '../firebase/config.js'
 import { STORES, DEFAULT_COLOR } from './constants.js'
+import { userCollection, userDoc } from './firestoreBase.js'
 import { newId } from '../utils/id.js'
 
 /** 講義1件の初期値。フォーム未入力の項目をここで埋める */
-function buildCourse(input) {
+function buildCourse(input, id) {
   return {
-    id: newId(),
+    id,
     semesterId: input.semesterId,
     name: input.name ?? '',
     teacher: input.teacher ?? '',
@@ -24,8 +26,10 @@ function buildCourse(input) {
 
 /** 指定学期の講義を名前順で返す */
 export async function listCourses(semesterId) {
-  const db = await getDB()
-  const list = await db.getAllFromIndex(STORES.courses, 'by-semester', semesterId)
+  const snap = await getDocs(
+    query(userCollection(STORES.courses), where('semesterId', '==', semesterId)),
+  )
+  const list = snap.docs.map((d) => d.data())
   return list.sort((a, b) => a.name.localeCompare(b.name, 'ja'))
 }
 
@@ -34,29 +38,28 @@ export async function listCourses(semesterId) {
  * 単位の集計は学期をまたいだ累計で行うため(spec 4.11)、ここでは絞り込まない。
  */
 export async function listAllCourses() {
-  const db = await getDB()
-  return db.getAll(STORES.courses)
+  const snap = await getDocs(userCollection(STORES.courses))
+  return snap.docs.map((d) => d.data())
 }
 
 export async function getCourse(id) {
-  const db = await getDB()
-  return db.get(STORES.courses, id)
+  const snap = await getDoc(userDoc(STORES.courses, id))
+  return snap.exists() ? snap.data() : undefined
 }
 
 export async function createCourse(input) {
   if (!input.semesterId) throw new Error('semesterId は必須です')
-  const db = await getDB()
-  const course = buildCourse(input)
-  await db.put(STORES.courses, course)
+  const id = newId()
+  const course = buildCourse(input, id)
+  await setDoc(userDoc(STORES.courses, id), course)
   return course
 }
 
 export async function updateCourse(id, patch) {
-  const db = await getDB()
-  const current = await db.get(STORES.courses, id)
+  const current = await getCourse(id)
   if (!current) throw new Error(`講義が見つかりません: ${id}`)
   const updated = { ...current, ...patch, id: current.id }
-  await db.put(STORES.courses, updated)
+  await setDoc(userDoc(STORES.courses, id), updated)
   return updated
 }
 
@@ -67,27 +70,16 @@ export async function updateCourse(id, patch) {
  *   - 紐づくスケジュール  → 削除せず、講義との紐付けだけ外す(データ消失を避ける)
  */
 export async function deleteCourse(id) {
-  const db = await getDB()
-  const tx = db.transaction(
-    [STORES.courses, STORES.timetableSlots, STORES.attendanceRecords, STORES.schedules],
-    'readwrite',
-  )
-
-  const slots = tx.objectStore(STORES.timetableSlots)
-  const records = tx.objectStore(STORES.attendanceRecords)
-  const schedules = tx.objectStore(STORES.schedules)
-
-  const [relatedSlots, relatedRecords, relatedSchedules] = await Promise.all([
-    slots.index('by-course').getAll(id),
-    records.index('by-course').getAll(id),
-    schedules.index('by-course').getAll(id),
+  const [slotsSnap, recordsSnap, schedulesSnap] = await Promise.all([
+    getDocs(query(userCollection(STORES.timetableSlots), where('courseId', '==', id))),
+    getDocs(query(userCollection(STORES.attendanceRecords), where('courseId', '==', id))),
+    getDocs(query(userCollection(STORES.schedules), where('courseId', '==', id))),
   ])
 
-  await Promise.all([
-    tx.objectStore(STORES.courses).delete(id),
-    ...relatedSlots.map((s) => slots.delete(s.id)),
-    ...relatedRecords.map((r) => records.delete(r.id)),
-    ...relatedSchedules.map((s) => schedules.put({ ...s, courseId: null })),
-    tx.done,
-  ])
+  const batch = writeBatch(db)
+  batch.delete(userDoc(STORES.courses, id))
+  slotsSnap.docs.forEach((d) => batch.delete(d.ref))
+  recordsSnap.docs.forEach((d) => batch.delete(d.ref))
+  schedulesSnap.docs.forEach((d) => batch.update(d.ref, { courseId: null }))
+  await batch.commit()
 }

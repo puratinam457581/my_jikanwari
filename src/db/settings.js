@@ -1,4 +1,5 @@
-import { getDB } from './database.js'
+import { getDoc, getDocs, setDoc, writeBatch } from 'firebase/firestore'
+import { db } from '../firebase/config.js'
 import {
   STORES,
   DISPLAY_SETTINGS_KEY,
@@ -6,6 +7,7 @@ import {
   DEFAULT_VISIBLE_DAYS,
   DEFAULT_PERIOD_SETTINGS,
 } from './constants.js'
+import { userCollection, userDoc } from './firestoreBase.js'
 
 // ---------------- 時限設定 (spec 7.6 / 4.8) ----------------
 
@@ -14,9 +16,8 @@ export const MAX_PERIODS = 12
 
 /** 保存されている時限設定を、時限番号順にすべて返す */
 export async function getAllPeriodSettings() {
-  const db = await getDB()
-  const all = await db.getAll(STORES.periodSettings)
-  return all.sort((a, b) => a.period - b.period)
+  const snap = await getDocs(userCollection(STORES.periodSettings))
+  return snap.docs.map((d) => d.data()).sort((a, b) => a.period - b.period)
 }
 
 /**
@@ -41,14 +42,14 @@ export async function getPeriodCount() {
 
 /** 1つの時限の開始・終了時刻を変更する */
 export async function updatePeriodTime(period, { startTime, endTime }) {
-  const db = await getDB()
-  const current = await db.get(STORES.periodSettings, period)
+  const snap = await getDoc(userDoc(STORES.periodSettings, period))
+  const current = snap.exists() ? snap.data() : null
   const updated = {
     period,
     startTime: startTime ?? current?.startTime ?? '09:00',
     endTime: endTime ?? current?.endTime ?? '10:40',
   }
-  await db.put(STORES.periodSettings, updated)
+  await setDoc(userDoc(STORES.periodSettings, period), updated)
   return updated
 }
 
@@ -60,7 +61,6 @@ export async function updatePeriodTime(period, { startTime, endTime }) {
  */
 export async function setPeriodCount(count) {
   const clamped = Math.min(MAX_PERIODS, Math.max(1, Math.floor(count) || 1))
-  const db = await getDB()
   const current = await getAllPeriodSettings()
 
   // 表示範囲に足りない行だけを既定値で補う
@@ -73,8 +73,9 @@ export async function setPeriodCount(count) {
   }
 
   if (missing.length > 0) {
-    const tx = db.transaction(STORES.periodSettings, 'readwrite')
-    await Promise.all([...missing.map((row) => tx.store.put(row)), tx.done])
+    const batch = writeBatch(db)
+    missing.forEach((row) => batch.set(userDoc(STORES.periodSettings, row.period), row))
+    await batch.commit()
   }
 
   await updateDisplaySettings({ periodCount: clamped })
@@ -101,8 +102,8 @@ export function findCurrentPeriod(periodSettings, now = new Date()) {
 
 /** 表示曜日・必要単位数などの設定を返す */
 export async function getDisplaySettings() {
-  const db = await getDB()
-  const settings = await db.get(STORES.displaySettings, DISPLAY_SETTINGS_KEY)
+  const snap = await getDoc(userDoc(STORES.displaySettings, DISPLAY_SETTINGS_KEY))
+  const settings = snap.exists() ? snap.data() : null
   // 既存データに項目が無い場合(アプリ更新後など)も既定値で埋める
   const merged = {
     key: DISPLAY_SETTINGS_KEY,
@@ -139,10 +140,9 @@ export async function getDisplaySettings() {
 }
 
 export async function updateDisplaySettings(patch) {
-  const db = await getDB()
   const current = await getDisplaySettings()
   const updated = { ...current, ...patch, key: DISPLAY_SETTINGS_KEY }
-  await db.put(STORES.displaySettings, updated)
+  await setDoc(userDoc(STORES.displaySettings, DISPLAY_SETTINGS_KEY), updated)
   return updated
 }
 

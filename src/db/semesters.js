@@ -1,11 +1,13 @@
-import { getDB } from './database.js'
+import { getDoc, getDocs, query, setDoc, where, writeBatch } from 'firebase/firestore'
+import { db } from '../firebase/config.js'
 import { STORES } from './constants.js'
+import { userCollection, userDoc } from './firestoreBase.js'
 import { newId } from '../utils/id.js'
 
 /** 全学期を「年度→前期/後期」の順で返す */
 export async function listSemesters() {
-  const db = await getDB()
-  const all = await db.getAll(STORES.semesters)
+  const snap = await getDocs(userCollection(STORES.semesters))
+  const all = snap.docs.map((d) => d.data())
   return all.sort((a, b) => {
     if (a.year !== b.year) return a.year - b.year
     return a.name === b.name ? 0 : a.name === '前期' ? -1 : 1
@@ -13,8 +15,8 @@ export async function listSemesters() {
 }
 
 export async function getSemester(id) {
-  const db = await getDB()
-  return db.get(STORES.semesters, id)
+  const snap = await getDoc(userDoc(STORES.semesters, id))
+  return snap.exists() ? snap.data() : undefined
 }
 
 /** 現在アクティブな(時間割画面に表示中の)学期を返す */
@@ -45,9 +47,9 @@ export async function semesterExists(year, name, exceptId = null) {
 }
 
 export async function createSemester({ name, year, startDate, endDate }) {
-  const db = await getDB()
+  const id = newId()
   const semester = {
-    id: newId(),
+    id,
     name,
     year,
     ...defaultSemesterDates(year, name),
@@ -56,13 +58,12 @@ export async function createSemester({ name, year, startDate, endDate }) {
     isActive: false,
     createdAt: new Date().toISOString(),
   }
-  await db.put(STORES.semesters, semester)
+  await setDoc(userDoc(STORES.semesters, id), semester)
   return semester
 }
 
 export async function updateSemester(id, patch) {
-  const db = await getDB()
-  const current = await db.get(STORES.semesters, id)
+  const current = await getSemester(id)
   if (!current) throw new Error(`学期が見つかりません: ${id}`)
 
   const updated = { ...current, ...patch, id: current.id }
@@ -75,7 +76,7 @@ export async function updateSemester(id, patch) {
     Object.assign(updated, defaultSemesterDates(updated.year, updated.name))
   }
 
-  await db.put(STORES.semesters, updated)
+  await setDoc(userDoc(STORES.semesters, id), updated)
   return updated
 }
 
@@ -85,18 +86,21 @@ export async function updateSemester(id, patch) {
  * 講義が1件も登録されていない学期(誤って作った場合)だけ削除を許す。
  */
 export async function deleteEmptySemester(id) {
-  const db = await getDB()
-  const courses = await db.getAllFromIndex(STORES.courses, 'by-semester', id)
-  if (courses.length > 0) {
+  const coursesSnap = await getDocs(
+    query(userCollection(STORES.courses), where('semesterId', '==', id)),
+  )
+  if (!coursesSnap.empty) {
     throw new Error('この学期には講義が登録されているため削除できません')
   }
-  const slots = await db.getAllFromIndex(STORES.timetableSlots, 'by-semester', id)
-  const tx = db.transaction([STORES.semesters, STORES.timetableSlots], 'readwrite')
-  await Promise.all([
-    tx.objectStore(STORES.semesters).delete(id),
-    ...slots.map((s) => tx.objectStore(STORES.timetableSlots).delete(s.id)),
-    tx.done,
-  ])
+
+  const slotsSnap = await getDocs(
+    query(userCollection(STORES.timetableSlots), where('semesterId', '==', id)),
+  )
+
+  const batch = writeBatch(db)
+  batch.delete(userDoc(STORES.semesters, id))
+  slotsSnap.docs.forEach((d) => batch.delete(d.ref))
+  await batch.commit()
 }
 
 /**
@@ -105,11 +109,10 @@ export async function deleteEmptySemester(id) {
  * 過去学期のデータは削除しない。
  */
 export async function setActiveSemester(id) {
-  const db = await getDB()
-  const tx = db.transaction(STORES.semesters, 'readwrite')
-  const all = await tx.store.getAll()
-  await Promise.all([
-    ...all.map((s) => tx.store.put({ ...s, isActive: s.id === id })),
-    tx.done,
-  ])
+  const all = await listSemesters()
+  const batch = writeBatch(db)
+  all.forEach((s) => {
+    batch.set(userDoc(STORES.semesters, s.id), { ...s, isActive: s.id === id })
+  })
+  await batch.commit()
 }

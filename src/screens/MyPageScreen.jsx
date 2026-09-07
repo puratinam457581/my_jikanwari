@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import ScreenLayout, { Card, EmptyState, LinkRow } from '../components/ScreenLayout.jsx'
+import ScreenLayout, { Button, Card, EmptyState, LinkRow } from '../components/ScreenLayout.jsx'
 import { MoonIcon, SunIcon } from '../components/icons.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
 import { THEMES, useTheme } from '../theme/ThemeProvider.jsx'
+import { useAuth } from '../firebase/AuthProvider.jsx'
 import { getCreditSummary, semesterApi, settingsApi } from '../db/index.js'
 import { getPermission } from '../notify/deliver.js'
 import { ProgressBar } from './CreditSettingsScreen.jsx'
@@ -60,6 +61,10 @@ export default function MyPageScreen() {
   return (
     <ScreenLayout title="マイページ">
       <div className="p-3">
+        <Card title="アカウント">
+          <AccountRow />
+        </Card>
+
         <Card title="単位取得状況">
           {loading || !summary ? (
             <EmptyState>読み込み中...</EmptyState>
@@ -130,10 +135,33 @@ export default function MyPageScreen() {
 
         <Card title="開発用">
           <LinkRow label="データ層の動作確認画面" onClick={() => push('devData')} />
-          <LinkRow label="Firebase連携(テスト)" onClick={() => push('firebaseAuthTest')} />
         </Card>
       </div>
     </ScreenLayout>
+  )
+}
+
+/** サインイン中のアカウント表示とサインアウト(フェーズ13) */
+function AccountRow() {
+  const { user, signOut } = useAuth()
+
+  const handleSignOut = () => {
+    if (!window.confirm('サインアウトしますか?\nこの端末でのデータ表示ができなくなります。')) return
+    signOut()
+  }
+
+  if (!user) return null
+
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="truncate text-sm text-hud">{user.displayName ?? '(名前なし)'}</p>
+        <p className="truncate text-[11px] text-hud-faint">{user.email}</p>
+      </div>
+      <Button variant="ghost" onClick={handleSignOut} className="shrink-0">
+        サインアウト
+      </Button>
+    </div>
   )
 }
 
