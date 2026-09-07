@@ -8,6 +8,7 @@ import { CheckIcon, TagIcon } from '../components/icons.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
 import { courseApi, scheduleApi, semesterApi } from '../db/index.js'
 import { parseDateString, toDateString } from '../utils/date.js'
+import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus.js'
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -41,6 +42,9 @@ export default function ScheduleScreen() {
       setLoading(false)
     })
   }, [load])
+
+  // 他の端末で編集した内容を、次にこの画面を見たときには反映させる
+  useRefreshOnFocus(() => load().catch((e) => console.error(e)))
 
   const toggleDone = async (schedule) => {
     await scheduleApi.toggleScheduleDone(schedule.id)

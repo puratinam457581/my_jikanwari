@@ -7,6 +7,7 @@ import { useAuth } from '../firebase/AuthProvider.jsx'
 import { getCreditSummary, semesterApi, settingsApi } from '../db/index.js'
 import { getPermission } from '../notify/deliver.js'
 import { ProgressBar } from './CreditSettingsScreen.jsx'
+import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus.js'
 
 /**
  * マイページ(spec 3章 / 4.11)。
@@ -57,6 +58,9 @@ export default function MyPageScreen() {
       setLoading(false)
     })
   }, [load])
+
+  // 他の端末で編集した内容を、次にこの画面を見たときには反映させる
+  useRefreshOnFocus(() => load().catch((e) => console.error(e)))
 
   return (
     <ScreenLayout title="マイページ">

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import ScreenLayout, { EmptyState, FloatingActionButton } from '../components/ScreenLayout.jsx'
 import { RoomIcon, TeacherIcon } from '../components/icons.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
 import { courseApi, semesterApi, timetableApi } from '../db/index.js'
+import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus.js'
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -17,58 +18,56 @@ export default function CourseListScreen() {
   const [semester, setSemester] = useState(null)
   const [courses, setCourses] = useState([])
 
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      const active = await semesterApi.getActiveSemester()
-      if (cancelled) return
-      setSemester(active)
-      if (!active) {
-        setLoading(false)
-        return
-      }
-
-      const [courseList, slots] = await Promise.all([
-        courseApi.listCourses(active.id),
-        timetableApi.listSlots(active.id),
-      ])
-      if (cancelled) return
-
-      // 各講義の「一番早いコマ」を求めて並べ替えに使う
-      const firstSlot = new Map()
-      for (const slot of slots) {
-        const key = `${slot.day}-${String(slot.period).padStart(2, '0')}`
-        const current = firstSlot.get(slot.courseId)
-        if (!current || key < current.key) {
-          firstSlot.set(slot.courseId, { key, day: slot.day, period: slot.period })
-        }
-      }
-
-      const withSlot = courseList.map((course) => ({
-        ...course,
-        slot: firstSlot.get(course.id) ?? null,
-        slotCount: slots.filter((s) => s.courseId === course.id).length,
-      }))
-
-      withSlot.sort((a, b) => {
-        // 未配置(slotなし)は末尾へ
-        if (!a.slot && !b.slot) return a.name.localeCompare(b.name, 'ja')
-        if (!a.slot) return 1
-        if (!b.slot) return -1
-        return a.slot.day - b.slot.day || a.slot.period - b.slot.period
-      })
-
-      setCourses(withSlot)
+  const load = useCallback(async () => {
+    const active = await semesterApi.getActiveSemester()
+    setSemester(active)
+    if (!active) {
       setLoading(false)
+      return
     }
+
+    const [courseList, slots] = await Promise.all([
+      courseApi.listCourses(active.id),
+      timetableApi.listSlots(active.id),
+    ])
+
+    // 各講義の「一番早いコマ」を求めて並べ替えに使う
+    const firstSlot = new Map()
+    for (const slot of slots) {
+      const key = `${slot.day}-${String(slot.period).padStart(2, '0')}`
+      const current = firstSlot.get(slot.courseId)
+      if (!current || key < current.key) {
+        firstSlot.set(slot.courseId, { key, day: slot.day, period: slot.period })
+      }
+    }
+
+    const withSlot = courseList.map((course) => ({
+      ...course,
+      slot: firstSlot.get(course.id) ?? null,
+      slotCount: slots.filter((s) => s.courseId === course.id).length,
+    }))
+
+    withSlot.sort((a, b) => {
+      // 未配置(slotなし)は末尾へ
+      if (!a.slot && !b.slot) return a.name.localeCompare(b.name, 'ja')
+      if (!a.slot) return 1
+      if (!b.slot) return -1
+      return a.slot.day - b.slot.day || a.slot.period - b.slot.period
+    })
+
+    setCourses(withSlot)
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
     load().catch((e) => {
       console.error(e)
       setLoading(false)
     })
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  }, [load])
+
+  // 他の端末で編集した内容を、次にこの画面を見たときには反映させる
+  useRefreshOnFocus(() => load().catch((e) => console.error(e)))
 
   return (
     <ScreenLayout

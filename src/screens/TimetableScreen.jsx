@@ -11,6 +11,7 @@ import {
 } from '../db/index.js'
 import { AlertIcon } from '../components/icons.jsx'
 import { findCurrentPeriod } from '../db/settings.js'
+import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus.js'
 
 /** 時計の表示を更新する間隔(現在時限のハイライト用) */
 const CLOCK_INTERVAL_MS = 60 * 1000
@@ -72,6 +73,9 @@ export default function TimetableScreen() {
       setError(e.message)
     })
   }, [load])
+
+  // 他の端末で編集した内容を、次にこの画面を見たときには反映させる
+  useRefreshOnFocus(() => load().catch((e) => console.error(e)))
 
   // 日付が変わる・時限が進むのに追従するため、1分ごとに現在時刻を更新する
   useEffect(() => {

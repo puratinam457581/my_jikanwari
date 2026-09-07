@@ -3,6 +3,7 @@ import ScreenLayout, { Card, EmptyState } from '../components/ScreenLayout.jsx'
 import { CheckIcon, PencilIcon, TrashIcon } from '../components/icons.jsx'
 import { useNavigation } from '../navigation/NavigationContext.jsx'
 import { courseApi, semesterApi } from '../db/index.js'
+import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus.js'
 
 /**
  * 学期の管理(spec 4.9)。
@@ -35,6 +36,9 @@ export default function SemesterSwitchScreen() {
       setLoading(false)
     })
   }, [load])
+
+  // 他の端末で編集した内容を、次にこの画面を見たときには反映させる
+  useRefreshOnFocus(() => load().catch((e) => console.error(e)))
 
   const handleSwitch = async (semester) => {
     if (semester.isActive) return

@@ -17,6 +17,7 @@ import {
   timetableApi,
 } from '../db/index.js'
 import { parseDateString } from '../utils/date.js'
+import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus.js'
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -60,6 +61,9 @@ export default function CourseDetailScreen({ courseId, day = null, period = null
   }, [load])
 
   const reload = () => load().catch((e) => console.error(e))
+
+  // 他の端末で編集した内容を、次にこの画面を見たときには反映させる
+  useRefreshOnFocus(reload)
 
   if (loading) {
     return (
