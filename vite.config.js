@@ -28,8 +28,11 @@ export default defineConfig({
         short_name: '時間割',
         description: '大学の時間割・出欠・課題・単位を管理するアプリ',
         lang: 'ja',
-        // ホーム画面から起動したときにブラウザのUIを出さない
-        display: 'standalone',
+        // 【2026-09-07 変更】standaloneだと、Googleサインインの画面遷移が
+        // iOS側の保存領域の制約でうまく戻ってこられないことがあるため、
+        // Safariに近い minimal-ui に変更(通知機能より、サインインの
+        // 信頼性とホーム画面アイコンとしての存在を優先するとの判断)
+        display: 'minimal-ui',
         orientation: 'portrait',
         start_url: '.',
         scope: '.',
