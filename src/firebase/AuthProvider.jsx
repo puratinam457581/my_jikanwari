@@ -3,11 +3,9 @@ import {
   GoogleAuthProvider,
   onAuthStateChanged,
   signInWithPopup,
-  signInWithRedirect,
   signOut as firebaseSignOut,
 } from 'firebase/auth'
 import { auth, isFirebaseConfigured } from './config.js'
-import { isStandalone } from '../notify/deliver.js'
 import { setCurrentUid } from '../db/firestoreBase.js'
 import { seedDefaultsIfNeeded } from '../db/seed.js'
 
@@ -20,16 +18,15 @@ import { seedDefaultsIfNeeded } from '../db/seed.js'
  * 覚えておく必要が無くなり、フェーズ12にあったsessionStorageの仕組みは
  * 撤去した。
  *
- * 【popupとredirectを使い分ける理由】
- * - PWA(ホーム画面から起動、standalone表示)ではポップアップウィンドウが
- *   開けないことがあるため、redirect方式が必要
- * - 一方でredirect方式は、Google → Firebaseの認証ドメイン → アプリ、と
- *   何度も画面を跨ぐため、Chromeの「バウンストラッキング対策」機能に
- *   中継地点(Firebaseの認証ドメイン)を怪しい中継サイトと誤認され、
- *   そこに保存された情報を消されてサインインが完了しないことがある
- *   (実機で確認済みの不具合)
- * 通常のブラウザタブではこの問題が起きないpopup方式を使い、
- * PWAとして起動しているときだけredirect方式に切り替える。
+ * 【popupで統一する理由(2026-09-07)】
+ * 以前はPWA(ホーム画面から起動、standalone表示)ではポップアップが
+ * 開けないと考え、standalone時だけsignInWithRedirectに切り替えていた。
+ * しかし実機検証の結果、redirect方式はiOSでは「ホーム画面アプリと
+ * Safariの保存領域が別」という制約により、Googleの認証画面から
+ * 正しく戻ってこられずサインインが完了しないことが判明した。
+ * 一方popup方式はstandaloneでも問題なく動作する(勉強管理アプリ
+ * 「benkyoujikan」で実績あり)ため、redirectへの切り替えをやめ、
+ * 常にpopup方式に統一する。
  */
 
 const AuthContext = createContext(null)
@@ -68,11 +65,7 @@ export function AuthProvider({ children }) {
     setError(null)
     const provider = new GoogleAuthProvider()
     try {
-      if (isStandalone()) {
-        await signInWithRedirect(auth, provider)
-      } else {
-        await signInWithPopup(auth, provider)
-      }
+      await signInWithPopup(auth, provider)
     } catch (e) {
       // ユーザーがポップアップを閉じただけの場合はエラー表示しない
       if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
