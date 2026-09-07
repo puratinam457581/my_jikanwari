@@ -38,6 +38,18 @@ jobs:
       # package-lock.json のとおりに入れる(npm install より確実で速い)
       - run: npm ci
 
+      # 【一時的な調査用ステップ】Variablesの値が本当に届いているかを、
+      # 値そのものは出さずに文字数だけ確認する。原因が分かったら削除する。
+      - name: (調査用)Variablesの文字数を確認
+        run: |
+          echo "VITE_FIREBASE_API_KEY: ${#VITE_FIREBASE_API_KEY} 文字"
+          echo "VITE_FIREBASE_AUTH_DOMAIN: ${#VITE_FIREBASE_AUTH_DOMAIN} 文字"
+          echo "VITE_FIREBASE_PROJECT_ID: ${#VITE_FIREBASE_PROJECT_ID} 文字"
+        env:
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+
       # Firebaseの接続設定をビルドに埋め込む。
       # 値そのものは秘密情報ではない(README参照)ため、Secretsではなく
       # リポジトリの Variables(Settings → Secrets and variables → Actions →
