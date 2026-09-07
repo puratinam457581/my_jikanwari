@@ -38,7 +38,18 @@ jobs:
       # package-lock.json のとおりに入れる(npm install より確実で速い)
       - run: npm ci
 
+      # Firebaseの接続設定をビルドに埋め込む。
+      # 値そのものは秘密情報ではない(README参照)ため、Secretsではなく
+      # リポジトリの Variables(Settings → Secrets and variables → Actions →
+      # Variables タブ)に登録したものを使う。
       - run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

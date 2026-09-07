@@ -3,9 +3,10 @@
 大学の週間時間割・出欠・課題・単位取得状況をまとめて管理する PWA。
 iPhone のホーム画面に追加して、アプリのように使うことを想定している。
 
-- **サーバーを持たない。** 入力したデータは端末のブラウザ(IndexedDB)の中だけにある
-- **完全無料。** 有料サービス・従量課金の要素は一切使っていない
-- **オフラインで動く。** 電波が無くても閲覧・登録・編集ができる
+- **自前のサーバーを持たない。** データの保存・同期には Firebase(無料の Sparkプラン)を使う
+- **完全無料。** 有料プランへの切り替えは行わない方針
+- **Googleアカウントでサインイン。** iPhoneとPCなど複数端末から同じデータを見られる
+- **オフラインでも動く。** 電波が無くても閲覧・登録・編集ができ、繋がったときに自動で同期する
 
 仕様の正典は [spec.md](spec.md)、見た目の正典は [ui-design-spec.md](ui-design-spec.md)。
 開発時のルールは [CLAUDE.md](CLAUDE.md)。
@@ -29,6 +30,25 @@ npm run icons   # アプリアイコンのPNGを作り直す
 > これらはブラウザの決まりで HTTPS か localhost でしか動作しない。
 > オフライン動作と通知の確認は、公開してから実機で行うこと。
 
+### Firebaseの接続設定(初回のみ)
+
+このアプリは Firebase(Authentication + Cloud Firestore、無料の Sparkプラン)を使う。
+開発するには `.env.example` を `.env.local` にコピーし、Firebase Console の
+「プロジェクトの設定」に出ている値を埋める(この値は秘密情報ではない)。
+
+```bash
+cp .env.example .env.local   # 値を埋めてから使う
+```
+
+さらに、以下の2つも一度だけ設定しておく必要がある。
+
+1. **Firestoreのセキュリティルール** — Firebase Console → Firestore Database →
+   ルール タブに `firestore.rules` の内容を貼り付けて **公開する**。
+   貼り付けただけでは反映されないので、公開ボタンを押したことを確認する
+2. **Authenticationの承認済みドメイン** — Firebase Console → Authentication →
+   Settings → 承認済みドメイン に、開発・公開に使うドメインを追加する
+   (`localhost` は最初から入っている)
+
 ---
 
 ## 公開する
@@ -45,7 +65,13 @@ npm run icons   # アプリアイコンのPNGを作り直す
 2. `git remote add origin <リポジトリのURL>` → `git push -u origin main`
 3. リポジトリの **Settings → Pages → Build and deployment → Source** を
    **GitHub Actions** に変更する
-4. **Actions** タブで処理が終わるのを待つ。
+4. リポジトリの **Settings → Secrets and variables → Actions → Variables タブ**
+   で、`.env.local` と同じ6つの値を **Repository variables** として登録する
+   (`VITE_FIREBASE_API_KEY` など。秘密情報ではないので Secrets ではなく
+   Variables でよい)
+5. Firebase Console → Authentication → Settings → 承認済みドメイン に、
+   公開URLのドメイン(`<ユーザー名>.github.io`)を追加する
+6. **Actions** タブで処理が終わるのを待つ。
    公開URLは `https://<ユーザー名>.github.io/<リポジトリ名>/`
 
 > **Public にする理由:** プライベートリポジトリで GitHub Pages を使うには
@@ -95,8 +121,9 @@ iOS には「アプリを閉じている間に、決まった時刻で通知を�
 
 ## バックアップ(重要)
 
-データは端末のブラウザの中にしか無い。ブラウザは空き容量が減ったときなどに
-このデータを消すことがあり、**機種変更でも引き継がれない。**
+データは Firestore(クラウド)に保存され、サインインした端末どうしで自動的に同期する。
+ただし Firestore はあくまでオンラインの保存先であり、アカウントを作り直した場合や
+万一のデータ消失に備えて、JSONバックアップの仕組みは引き続き用意している。
 
 **マイページ → バックアップ** から JSON を書き出し、iCloud Drive などに置いておくこと。
 マイページのバックアップ行に、前回書き出しからの経過日数が出る。
@@ -114,7 +141,8 @@ iOS には「アプリを閉じている間に、決まった時刻で通知を�
 
 ```
 src/
-  db/          IndexedDB の読み書き(画面の都合を持たない)
+  db/          Firestore の読み書き(画面の都合を持たない)
+  firebase/    Firebaseの初期化・サインイン状態の管理
   screens/     画面。index.js が「名前 → 画面」の対応表
   components/  画面をまたいで使う部品
   navigation/  タブ・重ね表示・モーダルの状態管理(ルーターは使わない)
@@ -135,7 +163,8 @@ public/
 | パッケージ | ライセンス | 用途 |
 |---|---|---|
 | react / react-dom | MIT | 画面の組み立て |
-| idb | ISC | IndexedDB を扱いやすくする |
+| firebase | Apache-2.0 | Authentication(Googleサインイン)・Cloud Firestore |
+| idb | ISC | 旧IndexedDB版の名残(参照用に残置。本番では未使用) |
 | lucide-react | ISC | アイコン |
 | vite / @vitejs/plugin-react | MIT | ビルド |
 | tailwindcss / @tailwindcss/vite | MIT | スタイル |
