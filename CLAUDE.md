@@ -138,10 +138,10 @@ npm run preview   # ビルド結果のローカル確認(PWA動作確認はこ�
       (`学期ID_曜日_時限` 等)に自動で組み替えるため、旧アプリでエクスポートした
       JSONをそのまま「全置換」でインポートすれば移行が完了する設計にしてある。
       移行時に見つけたバグ: 組み替えたドキュメントIDと、中身の`id`フィールドが
-      食い違う不具合があったため修正済み(withCorrectId関数)。実地での動作確認は未実施
-- [~] フェーズ16: 公開設定の更新(コード側は完了。GitHub Actionsに `VITE_FIREBASE_*` を
-      Variablesとして渡すよう `deploy.yml` を修正、READMEに手順を追記。
-      残りはユーザー側の手動作業: ①GitHubリポジトリのVariablesに6値を登録
-      ②Firebase Console → Authentication → 承認済みドメイン に公開URLのドメインを追加)
+      食い違う不具合があったため修正済み(withCorrectId関数)。実地で動作確認済み
+- [x] フェーズ16: 公開設定の更新。GitHub Actionsに `VITE_FIREBASE_*` をRepository
+      variablesとして渡すよう `deploy.yml` を修正、Firebase Console側で承認済み
+      ドメインにGitHub PagesのURLを追加。PC・iPhoneのホーム画面PWA双方で
+      サインイン・データ同期を実機確認済み(2026-09-08)
 
 進捗が動いたら、このチェックリストを更新すること。
