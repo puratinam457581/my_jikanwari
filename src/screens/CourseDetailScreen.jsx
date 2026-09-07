@@ -31,7 +31,9 @@ export default function CourseDetailScreen({ courseId, day = null, period = null
   const [slots, setSlots] = useState([])
   const [counts, setCounts] = useState({ present: 0, absent: 0, total: 0 })
   const [records, setRecords] = useState([])
-  const [showRecords, setShowRecords] = useState(false)
+  // 記録の削除ボタンをすぐ見つけられるよう、デフォルトで開いておく
+  // (以前は折りたたみ式で、削除に気づきにくいという指摘があった)
+  const [showRecords, setShowRecords] = useState(true)
   const [schedules, setSchedules] = useState([])
 
   const load = useCallback(async () => {
@@ -273,9 +275,9 @@ export default function CourseDetailScreen({ courseId, day = null, period = null
                               type="button"
                               onClick={() => handleDeleteRecord(record)}
                               aria-label={`${record.date} の記録を削除`}
-                              className="text-hud-faint active:opacity-60"
+                              className="-m-1.5 p-1.5 text-hud-faint active:opacity-60"
                             >
-                              <TrashIcon size={14} strokeWidth={1.5} />
+                              <TrashIcon size={16} strokeWidth={1.5} />
                             </button>
                           </span>
                         </li>
