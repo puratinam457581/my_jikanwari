@@ -1,12 +1,13 @@
-import { getDoc, getDocs, query, setDoc, where, writeBatch } from 'firebase/firestore'
+import { getDocs, query, setDoc, where, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase/config.js'
 import { STORES } from './constants.js'
 import { userCollection, userDoc } from './firestoreBase.js'
+import { fastGetDoc, fastGetDocs } from './fastRead.js'
 import { newId } from '../utils/id.js'
 
 /** 全学期を「年度→前期/後期」の順で返す */
 export async function listSemesters() {
-  const snap = await getDocs(userCollection(STORES.semesters))
+  const snap = await fastGetDocs(userCollection(STORES.semesters))
   const all = snap.docs.map((d) => d.data())
   return all.sort((a, b) => {
     if (a.year !== b.year) return a.year - b.year
@@ -15,7 +16,7 @@ export async function listSemesters() {
 }
 
 export async function getSemester(id) {
-  const snap = await getDoc(userDoc(STORES.semesters, id))
+  const snap = await fastGetDoc(userDoc(STORES.semesters, id))
   return snap.exists() ? snap.data() : undefined
 }
 

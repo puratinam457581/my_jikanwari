@@ -1,6 +1,7 @@
-import { deleteDoc, getDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
+import { deleteDoc, orderBy, query, setDoc, where } from 'firebase/firestore'
 import { NOTIFY_OPTIONS, STORES } from './constants.js'
 import { userCollection, userDoc } from './firestoreBase.js'
+import { fastGetDoc, fastGetDocs } from './fastRead.js'
 import { newId } from '../utils/id.js'
 
 /**
@@ -33,14 +34,14 @@ function buildSchedule(input, id) {
  * includeDone: false にすると完了済みを除外する(spec 4.10 のフィルタ用)。
  */
 export async function listSchedules({ includeDone = true } = {}) {
-  const snap = await getDocs(query(userCollection(STORES.schedules), orderBy('dueAt')))
+  const snap = await fastGetDocs(query(userCollection(STORES.schedules), orderBy('dueAt')))
   const all = snap.docs.map((d) => d.data())
   return includeDone ? all : all.filter((s) => !s.done)
 }
 
 /** 指定講義に紐づくスケジュールを返す(spec 4.3 のスケジュールカード用) */
 export async function listSchedulesByCourse(courseId) {
-  const snap = await getDocs(
+  const snap = await fastGetDocs(
     query(userCollection(STORES.schedules), where('courseId', '==', courseId)),
   )
   const list = snap.docs.map((d) => d.data())
@@ -48,7 +49,7 @@ export async function listSchedulesByCourse(courseId) {
 }
 
 export async function getSchedule(id) {
-  const snap = await getDoc(userDoc(STORES.schedules, id))
+  const snap = await fastGetDoc(userDoc(STORES.schedules, id))
   return snap.exists() ? snap.data() : undefined
 }
 

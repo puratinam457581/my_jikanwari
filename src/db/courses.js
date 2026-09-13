@@ -1,7 +1,8 @@
-import { getDoc, getDocs, query, setDoc, where, writeBatch } from 'firebase/firestore'
+import { getDocs, query, setDoc, where, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase/config.js'
 import { STORES, DEFAULT_COLOR } from './constants.js'
 import { userCollection, userDoc } from './firestoreBase.js'
+import { fastGetDoc, fastGetDocs } from './fastRead.js'
 import { newId } from '../utils/id.js'
 
 /** 講義1件の初期値。フォーム未入力の項目をここで埋める */
@@ -26,7 +27,7 @@ function buildCourse(input, id) {
 
 /** 指定学期の講義を名前順で返す */
 export async function listCourses(semesterId) {
-  const snap = await getDocs(
+  const snap = await fastGetDocs(
     query(userCollection(STORES.courses), where('semesterId', '==', semesterId)),
   )
   const list = snap.docs.map((d) => d.data())
@@ -38,12 +39,12 @@ export async function listCourses(semesterId) {
  * 単位の集計は学期をまたいだ累計で行うため(spec 4.11)、ここでは絞り込まない。
  */
 export async function listAllCourses() {
-  const snap = await getDocs(userCollection(STORES.courses))
+  const snap = await fastGetDocs(userCollection(STORES.courses))
   return snap.docs.map((d) => d.data())
 }
 
 export async function getCourse(id) {
-  const snap = await getDoc(userDoc(STORES.courses, id))
+  const snap = await fastGetDoc(userDoc(STORES.courses, id))
   return snap.exists() ? snap.data() : undefined
 }
 

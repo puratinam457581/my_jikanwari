@@ -1,4 +1,4 @@
-import { getDoc, getDocs, setDoc, writeBatch } from 'firebase/firestore'
+import { setDoc, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase/config.js'
 import {
   STORES,
@@ -8,6 +8,7 @@ import {
   DEFAULT_PERIOD_SETTINGS,
 } from './constants.js'
 import { userCollection, userDoc } from './firestoreBase.js'
+import { fastGetDoc, fastGetDocs } from './fastRead.js'
 
 // ---------------- 時限設定 (spec 7.6 / 4.8) ----------------
 
@@ -16,7 +17,7 @@ export const MAX_PERIODS = 12
 
 /** 保存されている時限設定を、時限番号順にすべて返す */
 export async function getAllPeriodSettings() {
-  const snap = await getDocs(userCollection(STORES.periodSettings))
+  const snap = await fastGetDocs(userCollection(STORES.periodSettings))
   return snap.docs.map((d) => d.data()).sort((a, b) => a.period - b.period)
 }
 
@@ -42,7 +43,7 @@ export async function getPeriodCount() {
 
 /** 1つの時限の開始・終了時刻を変更する */
 export async function updatePeriodTime(period, { startTime, endTime }) {
-  const snap = await getDoc(userDoc(STORES.periodSettings, period))
+  const snap = await fastGetDoc(userDoc(STORES.periodSettings, period))
   const current = snap.exists() ? snap.data() : null
   const updated = {
     period,
@@ -102,7 +103,7 @@ export function findCurrentPeriod(periodSettings, now = new Date()) {
 
 /** 表示曜日・必要単位数などの設定を返す */
 export async function getDisplaySettings() {
-  const snap = await getDoc(userDoc(STORES.displaySettings, DISPLAY_SETTINGS_KEY))
+  const snap = await fastGetDoc(userDoc(STORES.displaySettings, DISPLAY_SETTINGS_KEY))
   const settings = snap.exists() ? snap.data() : null
   // 既存データに項目が無い場合(アプリ更新後など)も既定値で埋める
   const merged = {

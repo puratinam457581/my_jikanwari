@@ -1,6 +1,7 @@
-import { deleteDoc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
+import { deleteDoc, getDoc, query, setDoc, where } from 'firebase/firestore'
 import { STORES, ATTENDANCE_TYPES } from './constants.js'
 import { userCollection, userDoc } from './firestoreBase.js'
+import { fastGetDocs } from './fastRead.js'
 
 /**
  * 出欠記録のドキュメントIDを「講義・日付」から組み立てる。
@@ -13,7 +14,7 @@ export function recordId(courseId, date) {
 
 /** 指定講義の出欠記録を、日付の新しい順で返す */
 export async function listRecordsByCourse(courseId) {
-  const snap = await getDocs(
+  const snap = await fastGetDocs(
     query(userCollection(STORES.attendanceRecords), where('courseId', '==', courseId)),
   )
   const list = snap.docs.map((d) => d.data())
@@ -51,7 +52,7 @@ export async function countAbsencesByCourse(courseIds) {
   const chunks = chunk(courseIds, IN_QUERY_CHUNK)
   await Promise.all(
     chunks.map(async (ids) => {
-      const snap = await getDocs(
+      const snap = await fastGetDocs(
         query(userCollection(STORES.attendanceRecords), where('courseId', 'in', ids)),
       )
       for (const d of snap.docs) {
@@ -65,7 +66,11 @@ export async function countAbsencesByCourse(courseIds) {
   return result
 }
 
-/** 同じ講義・同じ日付の記録を探す(重複登録の確認用、spec 4.4) */
+/**
+ * 同じ講義・同じ日付の記録を探す(重複登録の確認用、spec 4.4)。
+ * 出席登録という書き込み判断に直結するため、あえて fastGetDoc は使わず、
+ * キャッシュの古い情報で重複判定を誤らないようにする。
+ */
 export async function findRecordByDate(courseId, date) {
   const snap = await getDoc(userDoc(STORES.attendanceRecords, recordId(courseId, date)))
   return snap.exists() ? snap.data() : undefined

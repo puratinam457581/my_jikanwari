@@ -1,6 +1,7 @@
-import { deleteDoc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
+import { deleteDoc, query, setDoc, where } from 'firebase/firestore'
 import { STORES } from './constants.js'
 import { userCollection, userDoc } from './firestoreBase.js'
+import { fastGetDoc, fastGetDocs } from './fastRead.js'
 
 /**
  * コマ配置のドキュメントIDを「学期・曜日・時限」から組み立てる。
@@ -17,7 +18,7 @@ export function slotId(semesterId, day, period) {
 
 /** 指定学期の全コマ配置を返す */
 export async function listSlots(semesterId) {
-  const snap = await getDocs(
+  const snap = await fastGetDocs(
     query(userCollection(STORES.timetableSlots), where('semesterId', '==', semesterId)),
   )
   return snap.docs.map((d) => d.data())
@@ -38,13 +39,13 @@ export async function getSlotMap(semesterId) {
 
 /** 全学期のコマ配置を返す。設定変更で隠れるデータを探すのに使う */
 export async function listAllSlots() {
-  const snap = await getDocs(userCollection(STORES.timetableSlots))
+  const snap = await fastGetDocs(userCollection(STORES.timetableSlots))
   return snap.docs.map((d) => d.data())
 }
 
 /** 曜日・時限を指定して1コマぶんの配置を取得する */
 export async function getSlot(semesterId, day, period) {
-  const snap = await getDoc(userDoc(STORES.timetableSlots, slotId(semesterId, day, period)))
+  const snap = await fastGetDoc(userDoc(STORES.timetableSlots, slotId(semesterId, day, period)))
   return snap.exists() ? snap.data() : undefined
 }
 
@@ -69,7 +70,7 @@ export async function clearSlot(semesterId, day, period) {
 
 /** 講義IDから、その講義が配置されている全コマを返す */
 export async function listSlotsByCourse(courseId) {
-  const snap = await getDocs(
+  const snap = await fastGetDocs(
     query(userCollection(STORES.timetableSlots), where('courseId', '==', courseId)),
   )
   return snap.docs.map((d) => d.data())
